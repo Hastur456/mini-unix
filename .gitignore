@@ -1,0 +1,4 @@
+sys/
+build/
+.vscode/
+*.txt
