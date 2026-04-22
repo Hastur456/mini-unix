@@ -4,7 +4,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "sys/wait.h"
 #include "commands.h"
 
 #define BUFFER_SIZE 1024
@@ -15,7 +14,9 @@ struct Command commands[] = {
     {"pwd", cmd_pwd},
     {"cd", cmd_cd},
     {"echo", cmd_echo},
-    {"cat", cmd_cat}
+    {"cat", cmd_cat},
+    {"exit", cmd_exit},
+    {"help", cmd_help}
 };
 
 const int commands_count = sizeof(commands) / sizeof(commands[0]);
@@ -71,7 +72,7 @@ int cmd_cd(int argc, char **argv) {
 
     if (argc > 2) {
         fprintf(stderr, "usage: cd [path]\n");
-        return 1;
+        return 0;
     }
 
     path = argc == 2 ? argv[1] : getenv("HOME");
@@ -81,16 +82,17 @@ int cmd_cd(int argc, char **argv) {
 
     if (chdir(path) != 0) {
         perror("cd");
-        return 1;
+        return 0;
     }
     
     return 0;
 }
 
+
 int cmd_echo(int argc, char **argv) {
     if (argc == 2) {
         printf("%s\n", argv[1]);
-        return 1;
+        return 0;
     }
 
     if (argc > 2 || argv[2] == ">") {
@@ -113,7 +115,7 @@ int cmd_cat(int argc, char **argv) {
 
     if (fd < 0) {
         perror("cat");
-        return 1;
+        return 0;
     }
 
     char buffer[BUFFER_SIZE];
@@ -125,4 +127,25 @@ int cmd_cat(int argc, char **argv) {
 
     close(fd);
     return 0;
+}
+
+
+int cmd_help(int argc, char **args)
+{
+  int i;
+  printf("Type program names and arguments, and hit enter.\n");
+  printf("The following are built in:\n");
+
+  for (i = 0; i < commands_count; i++) {
+    printf("  %s\n", commands[i].name);
+  }
+
+  printf("Use the man command for information on other programs.\n");
+  return 0;
+}
+
+
+int cmd_exit(int argc, char **args)
+{
+  return 1;
 }

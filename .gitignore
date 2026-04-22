@@ -2,3 +2,5 @@ sys/
 build/
 .vscode/
 *.txt
+*.exe
+.codex
