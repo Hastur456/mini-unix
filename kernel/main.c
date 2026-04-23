@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "commands.h"
-#include "shell.h"
+#include "user/commands.h"
+#include "user/shell.h"
 
 
 int main(int argc, char **argv) {
