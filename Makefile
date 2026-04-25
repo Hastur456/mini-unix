@@ -12,11 +12,8 @@ all: dirs $(BUILD_DIR)/kernel.bin
 dirs:
 	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/bootloader.o:
-	$(ASM) -f elf32 kernel/boot/bootloader.asm -o $(BUILD_DIR)/bootloader.o
-
-$(BUILD_DIR)/entry.o:
-	$(ASM) -f elf32 kernel/entry.asm -o $(BUILD_DIR)/entry.o
+$(BUILD_DIR)/boot.o:
+	$(ASM) -f elf32 kernel/boot.asm -o $(BUILD_DIR)/boot.o
 
 $(BUILD_DIR)/kernel.o:
 	$(CC) $(CFLAGS) kernel/kernel.c -o $(BUILD_DIR)/kernel.o
@@ -25,15 +22,13 @@ $(BUILD_DIR)/main.o:
 	$(CC) $(CFLAGS) kernel/main.c -o $(BUILD_DIR)/main.o
 
 $(BUILD_DIR)/kernel.bin: \
-	$(BUILD_DIR)/bootloader.o \
-	$(BUILD_DIR)/entry.o \
+	$(BUILD_DIR)/boot.o \
 	$(BUILD_DIR)/kernel.o \
 	$(BUILD_DIR)/main.o
 
 	$(LD) $(LDFLAGS) \
 	-o $(BUILD_DIR)/kernel.bin \
-	$(BUILD_DIR)/bootloader.o \
-	$(BUILD_DIR)/entry.o \
+	$(BUILD_DIR)/boot.o \
 	$(BUILD_DIR)/kernel.o \
 	$(BUILD_DIR)/main.o
 
