@@ -1,19 +1,17 @@
-[BITS 16]
-[GLOBAL start]
-[EXTERN kmain]
+global _start
+extern kernel_main
 
-start:
-    cli
-    xor ax, ax
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
-    mov sp, 0x9000
-    sti
+section .text
 
-    call kmain
+_start:
+    mov esp, stack_top
+    call kernel_main
 
-hang:
+.hang:
     cli
     hlt
-    jmp hang
+    jmp .hang
+
+section .bss
+resb 8192
+stack_top:

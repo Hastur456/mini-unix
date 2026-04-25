@@ -1,15 +1,10 @@
-#include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "user/commands.h"
-#include "user/shell.h"
+void print(const char* str);
 
+void kernel_main() {
 
-int main(int argc, char **argv) {
-    shell_loop();
+    print("Mini Unix Kernel");
 
-    fprintf(stderr, "unknown command: %s\n", argv[1]);
-    return EXIT_SUCCESS;
+    while(1) {
+        __asm__("hlt");
+    }
 }

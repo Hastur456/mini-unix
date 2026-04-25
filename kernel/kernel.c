@@ -1,11 +1,13 @@
-void kmain(void) {
-    char *video = (char *)0xb8000;
+#include <stdint.h>
 
-    video[0] = 'H';
-    video[1] = 0x07;
-    video[2] = 'i';
-    video[3] = 0x07;
+volatile char* video = (volatile char*)0xb8000;
 
-    for (;;) {
+void print(const char* str) {
+    int i = 0;
+
+    while(str[i]) {
+        video[i * 2] = str[i];
+        video[i * 2 + 1] = 0x07;
+        i++;
     }
 }
