@@ -1,13 +1,11 @@
-#include <stdint.h>
+#include "vga.h"
 
-volatile char* video = (volatile char*)0xb8000;
+void kmain() {
 
-void print(const char* str) {
-    int i = 0;
+    terminal_initialize();
 
-    while(str[i]) {
-        video[i * 2] = str[i];
-        video[i * 2 + 1] = 0x07;
-        i++;
-    }
+    terminal_write("Mini Unix Kernel\n");
+    terminal_write("Hello from VGA terminal!");
+
+    while(1);
 }
