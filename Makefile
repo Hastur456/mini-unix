@@ -1,26 +1,39 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -Iuser
+ASM = nasm
+LD = ld
+
 BUILD_DIR = build
-TARGET = $(BUILD_DIR)/main.exe
 
-SRC = kernel/main.c user/shell.c user/commands.c
-OBJ = $(patsubst %.c,$(BUILD_DIR)/%.o,$(SRC))
+CFLAGS = -m32 -ffreestanding -c
+LDFLAGS = -m elf_i386 -T link.ld
 
-.PHONY: all run clean rebuild
+all: dirs $(BUILD_DIR)/kernel.bin
 
-all: $(TARGET)
+dirs:
+	mkdir -p $(BUILD_DIR)
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET)
+$(BUILD_DIR)/boot.o:
+	$(ASM) -f elf32 kernel/boot.asm -o $(BUILD_DIR)/boot.o
 
-$(BUILD_DIR)/%.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(BUILD_DIR)/kernel.o:
+	$(CC) $(CFLAGS) kernel/kernel.c -o $(BUILD_DIR)/kernel.o
 
-run: $(TARGET)
-	./$(TARGET)
+$(BUILD_DIR)/main.o:
+	$(CC) $(CFLAGS) kernel/main.c -o $(BUILD_DIR)/main.o
+
+$(BUILD_DIR)/kernel.bin: \
+	$(BUILD_DIR)/boot.o \
+	$(BUILD_DIR)/kernel.o \
+	$(BUILD_DIR)/main.o
+
+	$(LD) $(LDFLAGS) \
+	-o $(BUILD_DIR)/kernel.bin \
+	$(BUILD_DIR)/boot.o \
+	$(BUILD_DIR)/kernel.o \
+	$(BUILD_DIR)/main.o
+
+run: all
+	qemu-system-x86_64 -kernel $(BUILD_DIR)/kernel.bin
 
 clean:
-	rm -rf $(BUILD_DIR)
-
-rebuild: clean all
+	rm -rf build
