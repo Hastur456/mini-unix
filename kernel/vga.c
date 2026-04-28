@@ -27,6 +27,20 @@ void terminal_putchar(char c) {
         return;
     }
 
+    if (c == '\b') {
+        if (column > 0) {
+            column--;
+        } 
+        else if (row > 0) {
+            row--;
+            column = VGA_WIDTH - 1;
+        }
+
+        VGA_MEMORY[row * VGA_WIDTH + column] = vga_entry(' ', color);
+        
+        return;
+    }
+
     VGA_MEMORY[row * VGA_WIDTH + column] = vga_entry(c, color);
 
     column++;
