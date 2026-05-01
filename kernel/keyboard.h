@@ -6,8 +6,6 @@
 #define KB_SCANCODE_PORT 0x60
 #define KB_STATUS_PORT 0x64
 
-uint8_t inb(uint16_t port);
-void outb(uint16_t port, uint8_t value);
 uint8_t kb_scancode(void);
 uint8_t kb_status(void);
 int keyboard_getchar(void);
