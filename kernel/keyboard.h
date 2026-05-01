@@ -10,6 +10,7 @@ uint8_t inb(uint16_t port);
 void outb(uint16_t port, uint8_t value);
 uint8_t kb_scancode(void);
 uint8_t kb_status(void);
+int keyboard_getchar(void);
 
 extern const unsigned char kbdus[128];
 

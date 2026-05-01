@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "keyboard.h"
+#include "io.h"
 
 
 const unsigned char kbdus[128] =
@@ -35,18 +36,6 @@ const unsigned char kbdus[128] =
   '1','2','3','0','.'
 };
 
-uint8_t inb(uint16_t port) {
-    uint8_t value;
-
-    __asm__ volatile ("inb %1, %0" : "=a"(value) : "Nd"(port));
-
-    return value;
-}
-
-void outb(uint16_t port, uint8_t value) {
-    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
 uint8_t kb_scancode(void) {
     return inb(KB_SCANCODE_PORT);
 }
@@ -54,3 +43,18 @@ uint8_t kb_scancode(void) {
 uint8_t kb_status(void) {
     return inb(KB_STATUS_PORT);
 }
+
+int keyboard_getchar(void) {
+    if (!(kb_status() & 1)) {
+        return -1;
+    }
+
+    uint8_t scancode = kb_scancode();
+
+    if (scancode & 0x80) {
+        return -1;
+    }
+
+    return kbdus[scancode];
+}
+
