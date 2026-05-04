@@ -1,3 +1,13 @@
-// tty_putchar_from_keyboard(c);
-// tty_readline(buffer, size);
-// tty_write(str);
+#ifndef TTY_H
+#define TTY_H
+
+#include <stdint.h>
+#include <stddef.h>
+#include "tty.h"
+#include "vga.h"
+
+void tty_init();
+void tty_putchar(char c);
+void tty_write(const char* str);
+
+#endif
