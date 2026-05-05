@@ -48,7 +48,7 @@ void tty_putchar(char c) {
     }
 
     if (tty_y >= VGA_HEIGHT) {
-        tty_y = 0;
+        tty_init();
     }
 
     vga_update_cursor(tty_x, tty_y);

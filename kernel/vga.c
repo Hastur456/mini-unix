@@ -5,7 +5,7 @@
 
 static volatile uint16_t* const VGA_MEMORY = (uint16_t*)0xB8000;
 
-uint8_t color = 0x0F;
+static int color = 0x0F;
 
 static inline uint16_t vga_entry(unsigned char c, uint8_t color) {
     return (uint16_t)c | (uint16_t)color << 8;
