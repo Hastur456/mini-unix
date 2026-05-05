@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include "keyboard.h"
+#include "io.h"
+
 
 const unsigned char kbdus[128] =
 {
@@ -41,3 +43,18 @@ uint8_t kb_scancode(void) {
 uint8_t kb_status(void) {
     return inb(KB_STATUS_PORT);
 }
+
+int keyboard_getchar(void) {
+    if (!(kb_status() & 1)) {
+        return -1;
+    }
+
+    uint8_t scancode = kb_scancode();
+
+    if (scancode & 0x80) {
+        return -1;
+    }
+
+    return kbdus[scancode];
+}
+
