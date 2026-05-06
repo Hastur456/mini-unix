@@ -30,7 +30,7 @@ void tty_putchar(char c) {
         } 
         else if (tty_y > 0) {
             tty_y--;
-            tty_x = VGA_WIDTH - 1;
+            tty_x = VGA_WIDTH;
         }
 
         vga_putchar_at(' ', tty_x, tty_y);
