@@ -3,7 +3,7 @@
 #include "terminal.h"
 
 
-static volatile char buffer[COMMAND_BUFFER_SIZE];
+static char buffer[COMMAND_BUFFER_SIZE];
 static int len = 0;
 
 static int str_eq(const char* a, const char* b) {
@@ -54,16 +54,6 @@ static void buffer_backspace(void) {
     len--;
     buffer[len] = '\0';
     tty_putchar('\b');
-}
-
-static void print_buffer(void) {
-    tty_write("\nBuffer: [");
-
-    for (int i = 0; i < len; i++) {
-        tty_putchar(buffer[i]);
-    }
-
-    tty_write("]\n");
 }
 
 static void command_execute(const char* command) {

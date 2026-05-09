@@ -8,6 +8,7 @@
 
 uint8_t kb_scancode(void);
 uint8_t kb_status(void);
+void keyboard_init(void);
 int keyboard_getchar(void);
 
 extern const unsigned char kbdus[128];
