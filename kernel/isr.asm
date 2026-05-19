@@ -78,3 +78,40 @@ IRQ 14, 46
 IRQ 15, 47
 
 
+isr_common_stub:
+    pusha
+
+    mov eax, ds
+    push eax
+    mov eax, es
+    push eax
+    mov eax, fs
+    push eax
+    mov eax, gs
+    push eax
+
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    push esp
+    call interrupt_dispatch
+    add esp, 4
+
+    pop eax
+    mov gs, ax
+    pop eax
+    mov fs, ax
+    pop eax
+    mov es, ax
+    pop eax
+    mov ds, ax
+
+    popa
+    add esp, 8
+    iret
+
+
+section .note.GNU-stack noalloc noexec nowrite progbits
