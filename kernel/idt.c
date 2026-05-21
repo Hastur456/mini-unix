@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "idt.h"
+#include "interrupts.h"
 
 #define IDT_ENTRIES 256
 #define KERNEL_CODE_SELECTOR 0x08
@@ -110,7 +111,7 @@ void idt_init() {
     }
 
     for (int i = 0; i<16; i++) {
-        idt_set_gate(i, (uint32_t)irqs[i], KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE);
+        idt_set_gate(IRQ_BASE + i, (uint32_t)irqs[i], KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE);
     }
 
     ptr.limit = sizeof(idt) - 1;

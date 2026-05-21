@@ -12,7 +12,6 @@ isr%1:
 %macro ISR_ERR 1
 global isr%1
 isr%1:
-    push dword 0
     push dword %1
     jmp isr_common_stub
 %endmacro

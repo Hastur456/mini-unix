@@ -8,7 +8,7 @@
 #define KEYBOARD_VECTOR (IRQ_BASE + KEYBOARD_IRQ)
 #define KEYBOARD_BUFFER_SIZE 128
 
-static volatile unsigned char key_buffer[KEYBOARD_BUFFER_SIZE];
+static unsigned char key_buffer[KEYBOARD_BUFFER_SIZE];
 static volatile uint32_t key_buffer_head = 0;
 static volatile uint32_t key_buffer_tail = 0;
 
