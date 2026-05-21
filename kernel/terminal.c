@@ -3,7 +3,7 @@
 #include "terminal.h"
 
 
-static volatile char buffer[COMMAND_BUFFER_SIZE];
+static char buffer[COMMAND_BUFFER_SIZE];
 static int len = 0;
 
 static int str_eq(const char* a, const char* b) {
