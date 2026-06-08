@@ -113,4 +113,11 @@ isr_common_stub:
     iret
 
 
+global isr128
+isr128:
+    push dword 0
+    push dword 128
+    jmp isr_common_stub
+
+
 section .note.GNU-stack noalloc noexec nowrite progbits

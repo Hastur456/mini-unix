@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "idt.h"
 #include "interrupts.h"
+#include "syscalls.h"
 
 #define IDT_ENTRIES 256
 #define KERNEL_CODE_SELECTOR 0x08
@@ -74,6 +75,7 @@ extern void irq12(void);
 extern void irq13(void);
 extern void irq14(void);
 extern void irq15(void);
+extern void isr128(void);
 
 static void idt_load(struct idt_ptr* ptr) {
     __asm__ volatile ("lidt (%0)" : : "r"(ptr));
@@ -113,6 +115,8 @@ void idt_init() {
     for (int i = 0; i<16; i++) {
         idt_set_gate(IRQ_BASE + i, (uint32_t)irqs[i], KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE);
     }
+
+    idt_set_gate(SYSCALL_VECTOR, (uint32_t)isr128, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE);
 
     ptr.limit = sizeof(idt) - 1;
     ptr.base = (uint32_t)&idt;
