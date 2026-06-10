@@ -5,10 +5,14 @@
 #include "terminal.h"
 #include "timer.h"
 #include "tty.h"
+#include "gdt.h"
 
 
 void kmain() {
     tty_init();
+
+    gdt_init();
+
     interrupts_init();
     syscalls_init();
     pic_init();
