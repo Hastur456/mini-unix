@@ -2,6 +2,7 @@
 #define VNODE_H
 
 #include <stdint.h>
+#include "mount.h"
 
 
 typedef enum {
@@ -9,7 +10,7 @@ typedef enum {
     VNODE_DIR,
     VNODE_CHARDEV,
     VNODE_BLOCKDEV
-} vnode_type_t;
+} vnode_t;
 
 
 struct vnode_ops {
@@ -43,13 +44,19 @@ struct vnode_ops {
     );
 };
 
+typedef struct vnode_ops vnode_ops_t;
 
 struct vnode {
-    vnode_type_t type;
+    vnode_t type;
     uint32_t inode;
     uint32_t refcount;
-    struct vnode_ops *ops;
+    vnode_ops_t *ops;
     void *private_data;
+    
+    mount_t *mounted_here;
+    vnode_t *parent;
 };
+
+struct mount *mounted_here;
 
 #endif

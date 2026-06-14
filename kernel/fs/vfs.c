@@ -20,6 +20,25 @@ int str_eq(const char* a, const char* b) {
 }
 
 
+static char *next_component(const char *path, const char *name) {
+    while (*path == '/') {
+        path++;
+    }
+
+    if (*path == '\0') {
+        return NULL;
+    }
+
+    while (*path && *path != '/') {
+        *name++ = *path++;
+    }
+
+    *name = '\0';
+
+    return path;
+}
+
+
 int vfs_register_fs(filesystem_t *fs) {
     if (!fs || !fs->name) {
         return -1;
@@ -55,3 +74,17 @@ filesystem_t *vfs_find_fs(const char *name) {
 
     return NULL;
 }
+
+
+vnode_type_t *vfs_lookup(const char *path, const char *name) {
+    vnode_t *current;
+
+    if (*path == '/') {
+        *current.
+    }
+}
+
+
+// int vfs_mount(const char *path, const char *fs_name) {
+
+// }

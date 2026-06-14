@@ -22,5 +22,5 @@ struct filesystem_type {
 
 int vfs_register_fs(filesystem_t *fs);
 filesystem_t *vfs_find_fs(char *name);
-
+vnode_type_t *vfs_lookup(const char *path)
 #endif

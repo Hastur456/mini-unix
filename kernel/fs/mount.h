@@ -11,6 +11,7 @@ struct mount {
     void *private_data;
 };
 
+typedef struct mount mount_t;
 
 int vfs_mount(
     const char *path,
