@@ -4,16 +4,17 @@
 #include <stdint.h>
 #include "mount.h"
 
+struct vnode;
 
 typedef enum {
     VNODE_FILE,
     VNODE_DIR,
     VNODE_CHARDEV,
     VNODE_BLOCKDEV
-} vnode_t;
+} vnode_type_t;
 
 
-struct vnode_ops {
+typedef struct vnode_ops {
     int (*open)(struct vnode *node);
     int (*close)(struct vnode *node);
 
@@ -42,21 +43,20 @@ struct vnode_ops {
         const char *name,
         struct vnode **result
     );
-};
+} vnode_ops_t;
 
-typedef struct vnode_ops vnode_ops_t;
 
-struct vnode {
-    vnode_t type;
+typedef struct vnode {
+    vnode_type_t type;
+
     uint32_t inode;
     uint32_t refcount;
+
     vnode_ops_t *ops;
     void *private_data;
-    
-    mount_t *mounted_here;
-    vnode_t *parent;
-};
 
-struct mount *mounted_here;
+    mount_t *mounted_here;
+    struct vnode *parent;
+} vnode_t;
 
 #endif

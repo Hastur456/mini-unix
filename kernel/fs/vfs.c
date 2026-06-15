@@ -4,7 +4,30 @@
 #include "mounts.h"
 
 
-filesystem_t *registered_fs[MAX_FILESYSTEMS];
+static filesystem_t *registered_fs[MAX_FILESYSTEMS];
+static vnode_t root_vnode;
+static vnode_ops_t root_stub_ops = {
+    .open = NULL,
+    .close = NULL,
+    .read = NULL,
+    .write = NULL,
+    .lookup = root_lookup_stub,
+    .create = NULL,
+};
+
+
+static int root_lookup_stub(
+    vnode_t *dir,
+    const char *name,
+    vnode_t **result
+) {
+    (void)dir;
+    (void)name;
+
+    *result = NULL;
+
+    return -1;
+}
 
 
 int str_eq(const char* a, const char* b) {
@@ -20,7 +43,7 @@ int str_eq(const char* a, const char* b) {
 }
 
 
-static char *next_component(const char *path, const char *name) {
+static const char *next_component(const char *path, char *name) {
     while (*path == '/') {
         path++;
     }
@@ -30,12 +53,25 @@ static char *next_component(const char *path, const char *name) {
     }
 
     while (*path && *path != '/') {
-        *name++ = *path++;
+        *name = *path;
+        name++;
+        path++;
     }
 
     *name = '\0';
 
     return path;
+}
+
+
+void vfs_init(void) {
+    root_vnode.type = VNODE_DIR;
+    root_vnode.inode = 1;
+    root_vnode.refcount = 1;
+    root_vnode.ops = &root_stub_ops;
+    root_vnode.private_data = NULL;
+    root_vnode.mounted_here = NULL;
+    root_vnode.parent = &root_vnode;
 }
 
 
@@ -76,12 +112,30 @@ filesystem_t *vfs_find_fs(const char *name) {
 }
 
 
-vnode_type_t *vfs_lookup(const char *path, const char *name) {
+vnode_type_t *vfs_lookup(const char *path, vnode_t **result) {
     vnode_t *current;
+    char *name[VFS_MAX_NAME + 1]
+    
+    if (path[0] != '/') {
+        return -1;
+    }
 
     if (*path == '/') {
-        *current.
+        current = root_vnode;
     }
+
+    while ((p = next_component(path, name)) != NULL) {
+        vnode_t *next = NULL;
+
+        if (p->parent->ops.lookup(current, name, &next) < 0) {
+            return -1;
+        }
+
+        current = next;
+    }
+
+    *result = current
+    return 0;
 }
 
 

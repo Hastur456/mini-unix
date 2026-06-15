@@ -6,7 +6,7 @@
 #include "file.h"
 
 #define MAX_FILESYSTEMS 16
-
+#define VFS_MAX_NAME 255
 
 typedef struct filesystem_type filesystem_t;
 
