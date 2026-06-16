@@ -15,4 +15,7 @@ struct file {
     int refcount;
 };
 
+struct file *file_create(struct vnode *node, uint32_t flags);
+void file_destroy(struct file *file);
+
 #endif
