@@ -16,7 +16,7 @@ void heap_init(void *start, size_t size) {
 
 
 void *kmalloc(size_t size) {
-    size = (size + 7) & ~7(size_t);
+    size = (size + 7) & ~(size_t)7;
 
     if (heap_current + size >= heap_end) return NULL;
 
@@ -24,5 +24,10 @@ void *kmalloc(size_t size) {
 
     heap_current += size;
 
-    return ptr
+    return ptr;
+}
+
+
+void kfree(void *ptr) {
+    (void)ptr;
 }

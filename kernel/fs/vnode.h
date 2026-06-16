@@ -2,9 +2,11 @@
 #define VNODE_H
 
 #include <stdint.h>
-#include "mount.h"
 
 struct vnode;
+typedef struct mount mount_t;
+
+#define VFS_MAX_NAME 255
 
 typedef enum {
     VNODE_FILE,
@@ -48,6 +50,7 @@ typedef struct vnode_ops {
 
 typedef struct vnode {
     vnode_type_t type;
+    char name[VFS_MAX_NAME + 1];
 
     uint32_t inode;
     uint32_t refcount;
