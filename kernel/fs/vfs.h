@@ -5,6 +5,9 @@
 #include "mounts.h"
 #include "file.h"
 
+#define ENOMEM 12
+#define ENODEV 19
+
 #define MAX_FILESYSTEMS 16
 #define VFS_MAX_NAME 255
 

@@ -1,9 +1,19 @@
+#include <stdint.h>
+#include <stddef.h>
+#include <stderr.h>
 #include "vfs.h"
 #include "vnode.h"
 #include "file.h"
 #include "mounts.h"
+#include "../heap.h"
 
 
+int tmpfs_lookup(
+    int tmpfs_lookup(
+    vnode_t *dir,
+    const char *name,
+    vnode_t **result
+);
 static filesystem_t *registered_fs[MAX_FILESYSTEMS];
 static vnode_t root_vnode;
 static vnode_ops_t root_stub_ops = {
@@ -11,21 +21,28 @@ static vnode_ops_t root_stub_ops = {
     .close = NULL,
     .read = NULL,
     .write = NULL,
-    .lookup = root_lookup_stub,
+    .lookup = tmpfs_lookup,
     .create = NULL,
 };
 
 
-static int root_lookup_stub(
+int tmpfs_lookup(
+    int tmpfs_lookup(
     vnode_t *dir,
     const char *name,
     vnode_t **result
 ) {
-    (void)dir;
-    (void)name;
+    tmpfs_inode_t *inode = dir->private_data;
 
-    *result = NULL;
+    for (int i = 0; i < inode->child_count; i++) {
+        vnode_t *child = inode->children[i];
 
+        if (str_eq(child->name, name)) [
+            *result = child;
+            return 0;
+        ]
+    }
+    
     return -1;
 }
 
@@ -139,6 +156,38 @@ vnode_type_t *vfs_lookup(const char *path, vnode_t **result) {
 }
 
 
-// int vfs_mount(const char *path, const char *fs_name) {
+mount_t *alloc_mount(filesystem_t *fs, vnode_t *mountpoint, vnode_t *root) {
+    mount_t *mnt = kmalloc(sizeof(mount_t));
 
-// }
+    if (!mnt) return NULL;
+
+    mnt->fs = fs;
+    mnt->root = root;
+    mnt->mountpoint = mountpoint;
+    mnt->device
+
+    return mnt;
+}
+
+
+int vfs_mount(const char *path, const char *fs_name, void *device) {
+    filesystem_t *fs = vfs_find_fs(fs_name);
+
+    if (!fs) return -ENODEV;
+
+    vnode_t *mountpoint;
+    int err = vfs_lookup(path, &mountpoint);
+
+    if (err < 0) return err;
+    vnode_t *root = NULL;
+
+    err = fs->mount(device, &root);
+    if (err < 0) return err;
+
+    mount_t *mnt = alloc_mount(fs, mountpoint, root, device);
+    if (!mnt) return -ENOMEM;
+
+    mountpoint->mounted_here = mnt;
+
+    return 0;
+}
