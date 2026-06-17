@@ -31,5 +31,6 @@ void vfs_init(void);
 int vfs_register_fs(filesystem_t *fs);
 filesystem_t *vfs_find_fs(const char *name);
 int vfs_lookup(const char *path, vnode_t **result);
-
+int vfs_open(process_t *current_proc, const char *path, int flags);
+int vfs_close(process_t *current_proc, int fd);
 #endif

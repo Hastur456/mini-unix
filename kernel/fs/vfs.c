@@ -3,6 +3,8 @@
 
 #include "vfs.h"
 #include "../heap.h"
+#include "../proc/process.h"
+#include "file.h"
 
 static filesystem_t *registered_fs[MAX_FILESYSTEMS];
 static vnode_t root_vnode;
@@ -190,3 +192,31 @@ int vfs_mount(const char *path, const char *fs_name, void *device) {
 
     return 0;
 }
+
+int vfs_open(process_t *current_proc, const char *path, int flags) {
+    vnode_t *vnode;
+    int err;
+
+    err = vfs_lookup(path, &vnode);
+    if (err < 0) return err;
+
+    int fd = process_alloc_fd(current_proc);
+    if (fd < 0) return fd;
+
+    file_t f = file_create(vnode, flags);
+    if (!f) return -ENOMEM;
+
+    current_proc->files[fd] = f;
+
+    return fd;
+}
+
+int vfs_close(process_t *current_proc, int fd) {
+    file_t *f = process_get_file(current_proc, fd);
+    if (!f) return -ENOENT;
+
+    f->refcount--;
+    if (f->refcount == 0) file_destroy(f);
+
+    return 0;
+}   

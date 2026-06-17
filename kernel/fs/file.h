@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+typedef struct file file_t;
+
 struct vnode;
 
 struct file {
