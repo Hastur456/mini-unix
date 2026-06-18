@@ -1,6 +1,3 @@
-#include <stddef.h>
-#include <stdint.h>
-
 #include "vfs.h"
 #include "../heap.h"
 #include "../proc/process.h"
@@ -220,3 +217,51 @@ int vfs_close(process_t *current_proc, int fd) {
 
     return 0;
 }   
+
+ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count) {
+    if (!proc) return -EINVAL;
+
+    if (count == 0) return 0;
+
+    if (!buf) return -EINVAL;
+
+    file_t *file = process_get_file(proc, fd);
+    if (!file) return -EBADF;
+
+    int access_mode = file->flags & O_ACCMODE;
+    if (access_mode != O_RDONLY && access_mode != O_RDWR) return -EACCES;
+
+    vnode_t *vnode = file->node;
+    if (!vnode) return -EINVAL;
+
+    ssize_t bytes_read = vnode->ops->read(vnode, file->offset, buf, count);
+    if (bytes_read < 0) return bytes_read;
+
+    file->offset += bytes_read;
+
+    return bytes_read;
+}
+
+ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count) {
+    if (!proc) return -EINVAL;
+
+    if (count == 0) return 0;
+
+    if (!buf) return -EINVAL;
+
+    file_t *file = process_get_file(proc, fd);
+    if (!file) return -EBADF;
+
+    int access_mode = file->flags & O_ACCMODE;
+    if (access_mode != O_WRONLY && access_mode != O_RDWR) return -EACCES;
+
+    vnode_t *vnode = file->node;
+    if (!vnode) return -EINVAL;
+
+    ssize_t bytes_write = vnode->ops->write(vnode, file->offset, buf, count);
+    if (bytes_write < 0) return bytes_write;
+
+    file->offset += bytes_write;
+
+    return bytes_write;
+}

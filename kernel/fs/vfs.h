@@ -1,6 +1,11 @@
 #ifndef VFS_H
 #define VFS_H
 
+#include <sys/types.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stddef.h>
+
 #include "vnode.h"
 #include "mount.h"
 #include "file.h"
@@ -34,4 +39,6 @@ filesystem_t *vfs_find_fs(const char *name);
 int vfs_lookup(const char *path, vnode_t **result);
 int vfs_open(process_t *current_proc, const char *path, int flags);
 int vfs_close(process_t *current_proc, int fd);
+ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count);
+ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count);
 #endif
