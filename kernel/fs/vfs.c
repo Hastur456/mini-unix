@@ -203,7 +203,7 @@ int vfs_open(process_t *current_proc, const char *path, int flags) {
     int fd = process_alloc_fd(current_proc);
     if (fd < 0) return fd;
 
-    file_t f = file_create(vnode, flags);
+    file_t *f = file_create(vnode, flags);
     if (!f) return -ENOMEM;
 
     current_proc->files[fd] = f;

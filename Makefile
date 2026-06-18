@@ -13,15 +13,19 @@ KERNEL_BIN := $(BUILD_DIR)/kernel.bin
 
 KERNEL_C_SRCS := $(wildcard $(KERNEL_DIR)/*.c)
 KERNEL_FS_C_SRCS := $(wildcard $(KERNEL_DIR)/fs/*.c)
+KERNEL_PROC_C_SRCS := $(wildcard $(KERNEL_DIR)/proc/*.c)
 KERNEL_ASM_SRCS := $(wildcard $(KERNEL_DIR)/*.asm)
 TEST_C_SRCS := $(wildcard tests/*.c)
 
 BOOT_OBJ := $(BUILD_DIR)/boot.o
 C_OBJS := $(patsubst $(KERNEL_DIR)/%.c,$(BUILD_DIR)/%.o,$(KERNEL_C_SRCS))
 FS_C_OBJS := $(patsubst $(KERNEL_DIR)/fs/%.c,$(BUILD_DIR)/fs/%.o,$(KERNEL_FS_C_SRCS))
+PROC_C_OBJS := $(patsubst $(KERNEL_DIR)/proc/%.c,$(BUILD_DIR)/proc/%.o,$(KERNEL_PROC_C_SRCS))
 ASM_OBJS := $(patsubst $(KERNEL_DIR)/%.asm,$(BUILD_DIR)/%_asm.o,$(filter-out $(KERNEL_DIR)/boot.asm,$(KERNEL_ASM_SRCS)))
-OBJS := $(BOOT_OBJ) $(C_OBJS) $(FS_C_OBJS) $(ASM_OBJS)
-DEPS := $(C_OBJS:.o=.d) $(FS_C_OBJS:.o=.d)
+OBJS := $(BOOT_OBJ) $(C_OBJS) $(PROC_C_OBJS) $(FS_C_OBJS) $(ASM_OBJS)
+DEPS := $(C_OBJS:.o=.d) \
+        $(FS_C_OBJS:.o=.d) \
+        $(PROC_C_OBJS:.o=.d)
 TEST_BIN := $(BUILD_DIR)/test_vfs
 
 CFLAGS := -m32 -std=gnu99 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -MMD -MP -I$(KERNEL_DIR) -Dkmain=kernel_main
@@ -46,6 +50,10 @@ $(BUILD_DIR)/fs/%.o: $(KERNEL_DIR)/fs/%.c | dirs
 	mkdir -p $(BUILD_DIR)/fs
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/proc/%.o: $(KERNEL_DIR)/proc/%.c | dirs
+	mkdir -p $(BUILD_DIR)/proc
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/%_asm.o: $(KERNEL_DIR)/%.asm | dirs
 	$(ASM) $(ASFLAGS) $< -o $@
 
@@ -56,7 +64,12 @@ run: all
 	$(QEMU) $(QEMU_DISPLAY) $(QEMU_FLAGS) -kernel $(KERNEL_BIN)
 
 $(TEST_BIN): $(TEST_C_SRCS) $(KERNEL_DIR)/fs/vfs.c | dirs
-	$(CC) $(TEST_CFLAGS) $^ -o $@
+	$(CC) $(TEST_CFLAGS) \
+    tests/test_vfs.c \
+    kernel/fs/vfs.c \
+    kernel/fs/file.c \
+    kernel/proc/process.c \
+    -o build/test_vfs
 
 test: $(TEST_BIN)
 	$(TEST_BIN)

@@ -4,6 +4,7 @@
 #include "vnode.h"
 #include "mount.h"
 #include "file.h"
+#include "../proc/process.h"
 
 #define ENOMEM 12
 #define ENODEV 19
