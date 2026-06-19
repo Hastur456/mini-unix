@@ -258,6 +258,8 @@ ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count) {
     vnode_t *vnode = file->node;
     if (!vnode) return -EINVAL;
 
+    if (!vnode->ops || !vnode->ops->write) return -ENOSYS;
+
     ssize_t bytes_write = vnode->ops->write(vnode, file->offset, buf, count);
     if (bytes_write < 0) return bytes_write;
 
