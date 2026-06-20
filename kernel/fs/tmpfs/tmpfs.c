@@ -45,6 +45,18 @@ static tmpfs_inode_t *tmpfs_alloc_inode(
     return inode;
 }
 
+static vnode_t *tmpfs_create_vnode(tmpfs_inode_t *inode) {
+    vnode_t *vn = vnode_alloc();
+    if (!vn) return NULL;
+    
+    vn->ops = &tmpfs_vnode_ops;
+    vn->private_data = inode;
+    vn->type = (inode->type == TMPFS_TYPE_DIR) ? VNODE_DIR : VNODE_FILE;
+    inode->vnode = vn;
+    
+    return vn;
+}
+
 static void tmpfs_add_child(tmpfs_inode_t *dir, tmpfs_inode_t *child) {
     child->next_sibling = dir->first_child;
     child->first_child = child;
@@ -82,4 +94,111 @@ int tmpfs_mount(void *device, vnode_t **root) {
     return 0;
 }
 
+int tmpfs_lookup(vnode_t *dir, const char *name, vnode_t **result) {
+    if (!dir || !name || !result) return -EINVAL;
 
+    tmpfs_inode_t *dir_inode = (tmpfs_inode_t *)dir->private_data;
+    if (!dir_inode) return -EINVAL;
+
+    if (str_eq(name, ".")) {
+        *result = dir;
+        return 0;
+    }
+
+    if (str_eq(name, "..")) {
+        *result = dir_inode->parent ? dir_inode->parent->vnode : dir;
+        return 0;
+    }
+
+    tmpfs_inode_t *child = tmpfs_find_child(dir_inode, name);
+    if (!child) return -ENOENT;
+
+    *result = child->vnode;
+
+    return 0;
+}
+
+int tmpfs_create(vnode_t *dir, const char *name, vnode_t **result) {
+    if (!dir || !name || !result) return -EINVAL;
+
+    tmpfs_inode_t inode = (tmpfs_inode_t *)dir->private_data;
+    if (dir->type != TMPFS_TYPE_DIR) return -EINVAL;
+
+    if (!tmpfs_find_child(inode, name)) return -EEXIST;
+
+    tmpfs_inode_t *new_inode = tmpfs_alloc_inode(TMPFS_TYPE_FILE, name, inode);
+    if (!new_inode) return -ENOMEM;
+
+    vnode_t *new_vnode = tmpfs_create_vnode(new_inode);
+    if (!new_vnode) {
+        kfree(new_vnode);
+        return -ENOMEM
+    };
+
+    tmpfs_add_child(inode, new_inode);
+
+    *result = new_vnode;
+    return 0;
+}
+
+ssize_t tmpfs_read(vnode_t *vn, void *buf, size_t count, size_t offset) {
+    if (!vn || !buf) return -EINVAL;
+    if (count == 0) return 0;
+
+    tmpfs_inode_t *inode = (tmpfs_inode_t *)vn->private_data;
+    if (inode->type != TMPFS_TYPE_FILE) return -EINVAL;
+
+    if (offset >= inode->size) {
+        return 0;
+    }
+
+    size_t available = inode->size - offset;
+    size_t to_read = (count > available) ? available : count;
+
+    char *dst = (char *)buf;
+    char *src = (char *)inode->data + offset;
+    
+    for (size_t i = 0; i < to_read; i++) {
+        dst[i] = src[i];
+    }
+
+    return to_read;
+}
+
+ssize_t tmpfs_write(vnode_t *vn, const void *buf, size_t count, size_t offset) {
+    if (!vn || !buf) return -EINVAL;
+    if (count == 0) return 0;
+
+    tmpfs_inode_t *inode = (tmpfs_inode_t *)vn->private_data;
+    if (inode->type != TMPFS_TYPE_FILE) return -EINVAL;
+
+    size_t required_size = offset + count;
+
+    if (required_size > inode->size) {
+        void *new_data = krealloc(inode->data, required_size);
+        if (!new_data) {
+            return -ENOSPC; 
+        }
+        inode->data = new_data;
+        
+        if (offset > inode->size) {
+            char *hole_ptr = (char *)inode->data + inode->size;
+            size_t hole_size = offset - inode->size;
+            
+            for (size_t i = 0; i < hole_size; i++) {
+                hole_ptr[i] = 0;
+            }
+        }
+        
+        inode->size = required_size;
+    }
+
+    char *dst = (char *)inode->data + offset;
+    const char *src = (const char *)buf;
+    
+    for (size_t i = 0; i < count; i++) {
+        dst[i] = src[i];
+    }
+
+    return count;
+}

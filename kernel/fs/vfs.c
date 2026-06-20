@@ -54,16 +54,16 @@ static vnode_t *mounted_root(vnode_t *node) {
 }
 
 vnode_t *vnode_alloc(void) {
-    vnode_t *vnode = (vnode *)kmalloc(sizeof(vnode_t));
+    vnode_t *vnode = (vnode_t *)kmalloc(sizeof(vnode_t));
 
     if (!vnode) return NULL;
 
     for (int i = 0; i < VFS_MAX_NAME + 1; i++) {
-        vn->name[i] = '\0';
+        vnode->name[i] = '\0';
     }
 
-    vnode->type = type;
-    vnode->ops = ops;
+    vnode->type = VNODE_DIR;
+    vnode->ops = NULL;
 
     vnode->inode = 0;
     vnode->refcount = 1;

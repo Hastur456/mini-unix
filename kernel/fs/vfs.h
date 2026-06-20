@@ -41,5 +41,5 @@ int vfs_open(process_t *current_proc, const char *path, int flags);
 int vfs_close(process_t *current_proc, int fd);
 ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count);
 ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count);
-vnode_t vnode_alloc(vnode_type_t type, vnode_ops_t *ops);
+vnode_t *vnode_alloc(void);
 #endif
