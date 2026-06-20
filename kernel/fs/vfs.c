@@ -6,7 +6,7 @@
 static filesystem_t *registered_fs[MAX_FILESYSTEMS];
 static vnode_t root_vnode;
 
-static int str_eq(const char *a, const char *b) {
+int str_eq(const char *a, const char *b) {
     size_t i = 0;
 
     if (!a || !b) {
@@ -51,6 +51,27 @@ static vnode_t *mounted_root(vnode_t *node) {
     }
 
     return node;
+}
+
+vnode_t *vnode_alloc(void) {
+    vnode_t *vnode = (vnode *)kmalloc(sizeof(vnode_t));
+
+    if (!vnode) return NULL;
+
+    for (int i = 0; i < VFS_MAX_NAME + 1; i++) {
+        vn->name[i] = '\0';
+    }
+
+    vnode->type = type;
+    vnode->ops = ops;
+
+    vnode->inode = 0;
+    vnode->refcount = 1;
+    vnode->private_data = NULL;
+    vnode->mounted_here = NULL;
+    vnode->parent = NULL;
+
+    return vnode;
 }
 
 void vfs_init(void) {

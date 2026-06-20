@@ -8,6 +8,14 @@
 #include "../fs/vnode.h" 
 #include "../fs/mount.h"
 
+#define ENOMEM 12
+#define ENODEV 19
+#define EINVAL 22
+#define ENOENT 2
+#define EEXIST 17
+#define ENOSPC 28
+#define ENOTDIR 20
+
 #define TMPFS_MAX_NAME 64
 
 typedef enum {
@@ -29,7 +37,7 @@ typedef struct tmpfs_inode {
 } tmpfs_inode_t;
 
 int tmpfs_init(void);
-int tmpfs_mount(struct mount *mnt);
+int tmpfs_mount(void *device, vnode_t **root);
 int tmpfs_lookup(vnode_t *dir, const char *name, vnode_t **result);
 int tmpfs_create(vnode_t *dir, const char *name, vnode_t **result);
 ssize_t tmpfs_read(vnode_t *vn, void *buf, size_t count, size_t offset);
