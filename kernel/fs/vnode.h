@@ -1,7 +1,9 @@
 #ifndef VNODE_H
 #define VNODE_H
 
+#include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 struct vnode;
 typedef struct mount mount_t;
@@ -20,18 +22,18 @@ typedef struct vnode_ops {
     int (*open)(struct vnode *node);
     int (*close)(struct vnode *node);
 
-    int (*read)(
+    ssize_t (*read)(
         struct vnode *node,
-        uint32_t offset,
+        size_t offset,
         void *buffer,
-        uint32_t size
+        size_t size
     );
 
-    int (*write)(
+    ssize_t (*write)(
         struct vnode *node,
-        uint32_t offset,
+        size_t offset,
         const void *buffer,
-        uint32_t size
+        size_t size
     );
 
     int (*lookup)(

@@ -5,8 +5,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "../fs/vnode.h" 
-#include "../fs/mount.h"
+#include "../vnode.h" 
+#include "../mount.h"
 
 #define ENOMEM 12
 #define ENODEV 19
@@ -40,7 +40,7 @@ int tmpfs_init(void);
 int tmpfs_mount(void *device, vnode_t **root);
 int tmpfs_lookup(vnode_t *dir, const char *name, vnode_t **result);
 int tmpfs_create(vnode_t *dir, const char *name, vnode_t **result);
-ssize_t tmpfs_read(vnode_t *vn, void *buf, size_t count, size_t offset);
-ssize_t tmpfs_write(vnode_t *vn, const void *buf, size_t count, size_t offset);
+ssize_t tmpfs_read(vnode_t *vn, size_t offset, void *buf, size_t count);
+ssize_t tmpfs_write(vnode_t *vn, size_t offset, const void *buf, size_t count);
 
 #endif

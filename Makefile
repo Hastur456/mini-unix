@@ -13,20 +13,22 @@ KERNEL_BIN := $(BUILD_DIR)/kernel.bin
 
 KERNEL_C_SRCS := $(wildcard $(KERNEL_DIR)/*.c)
 KERNEL_FS_C_SRCS := $(wildcard $(KERNEL_DIR)/fs/*.c)
+KERNEL_TMPFS_C_SRCS := $(wildcard $(KERNEL_DIR)/fs/tmpfs/*.c)
 KERNEL_PROC_C_SRCS := $(wildcard $(KERNEL_DIR)/proc/*.c)
 KERNEL_ASM_SRCS := $(wildcard $(KERNEL_DIR)/*.asm)
-TEST_C_SRCS := $(wildcard tests/*.c)
 
 BOOT_OBJ := $(BUILD_DIR)/boot.o
 C_OBJS := $(patsubst $(KERNEL_DIR)/%.c,$(BUILD_DIR)/%.o,$(KERNEL_C_SRCS))
 FS_C_OBJS := $(patsubst $(KERNEL_DIR)/fs/%.c,$(BUILD_DIR)/fs/%.o,$(KERNEL_FS_C_SRCS))
+TMPFS_C_OBJS := $(patsubst $(KERNEL_DIR)/fs/tmpfs/%.c,$(BUILD_DIR)/fs/tmpfs/%.o,$(KERNEL_TMPFS_C_SRCS))
 PROC_C_OBJS := $(patsubst $(KERNEL_DIR)/proc/%.c,$(BUILD_DIR)/proc/%.o,$(KERNEL_PROC_C_SRCS))
 ASM_OBJS := $(patsubst $(KERNEL_DIR)/%.asm,$(BUILD_DIR)/%_asm.o,$(filter-out $(KERNEL_DIR)/boot.asm,$(KERNEL_ASM_SRCS)))
-OBJS := $(BOOT_OBJ) $(C_OBJS) $(PROC_C_OBJS) $(FS_C_OBJS) $(ASM_OBJS)
+OBJS := $(BOOT_OBJ) $(C_OBJS) $(PROC_C_OBJS) $(FS_C_OBJS) $(TMPFS_C_OBJS) $(ASM_OBJS)
 DEPS := $(C_OBJS:.o=.d) \
         $(FS_C_OBJS:.o=.d) \
+        $(TMPFS_C_OBJS:.o=.d) \
         $(PROC_C_OBJS:.o=.d)
-TEST_BIN := $(BUILD_DIR)/test_vfs
+TEST_BINS := $(BUILD_DIR)/test_vfs $(BUILD_DIR)/test_tmpfs
 
 CFLAGS := -m32 -std=gnu99 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -MMD -MP -I$(KERNEL_DIR) -Dkmain=kernel_main
 TEST_CFLAGS := -std=c99 -Wall -Wextra -I$(KERNEL_DIR) -I$(KERNEL_DIR)/fs
@@ -50,6 +52,10 @@ $(BUILD_DIR)/fs/%.o: $(KERNEL_DIR)/fs/%.c | dirs
 	mkdir -p $(BUILD_DIR)/fs
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/fs/tmpfs/%.o: $(KERNEL_DIR)/fs/tmpfs/%.c | dirs
+	mkdir -p $(BUILD_DIR)/fs/tmpfs
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/proc/%.o: $(KERNEL_DIR)/proc/%.c | dirs
 	mkdir -p $(BUILD_DIR)/proc
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -63,16 +69,25 @@ $(KERNEL_BIN): $(OBJS) link.ld
 run: all
 	$(QEMU) $(QEMU_DISPLAY) $(QEMU_FLAGS) -kernel $(KERNEL_BIN)
 
-$(TEST_BIN): $(TEST_C_SRCS) $(KERNEL_DIR)/fs/vfs.c | dirs
+$(BUILD_DIR)/test_vfs: tests/test_vfs.c $(KERNEL_DIR)/fs/vfs.c $(KERNEL_DIR)/fs/file.c $(KERNEL_DIR)/proc/process.c | dirs
 	$(CC) $(TEST_CFLAGS) \
-    tests/test_vfs.c \
-    kernel/fs/vfs.c \
-    kernel/fs/file.c \
-    kernel/proc/process.c \
-    -o build/test_vfs
+		tests/test_vfs.c \
+		kernel/fs/vfs.c \
+		kernel/fs/file.c \
+		kernel/proc/process.c \
+		-o $@
 
-test: $(TEST_BIN)
-	$(TEST_BIN)
+$(BUILD_DIR)/test_tmpfs: tests/test_tmpfs.c $(KERNEL_DIR)/fs/vfs.c $(KERNEL_DIR)/fs/file.c $(KERNEL_DIR)/proc/process.c $(KERNEL_DIR)/fs/tmpfs/tmpfs.c | dirs
+	$(CC) $(TEST_CFLAGS) \
+		tests/test_tmpfs.c \
+		kernel/fs/vfs.c \
+		kernel/fs/file.c \
+		kernel/proc/process.c \
+		kernel/fs/tmpfs/tmpfs.c \
+		-o $@
+
+test: $(TEST_BINS)
+	@for test in $(TEST_BINS); do $$test; done
 
 clean:
 	rm -rf $(BUILD_DIR)

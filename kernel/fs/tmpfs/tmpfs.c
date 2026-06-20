@@ -1,4 +1,5 @@
 #include "tmpfs.h"
+#include "../vfs.h"
 
 extern int str_eq(const char *a, const char *b);
 extern void *kmalloc(size_t size);
@@ -28,30 +29,34 @@ static tmpfs_inode_t *tmpfs_alloc_inode(
     if (!tmpfs_inode) return NULL;
 
     char *mem_ptr = (char *)tmpfs_inode;
-    for (int i = 0; i < sizeof(tmpfs_inode_t); i++) mem_ptr[i] = 0;
+    for (size_t i = 0; i < sizeof(tmpfs_inode_t); i++) mem_ptr[i] = 0;
 
-    inode->type = type;
-    inode->parent = parent;
+    tmpfs_inode->type = type;
+    tmpfs_inode->parent = parent;
 
     if (name) {
         int i = 0;
         while(name[i] != '\0' && i < (TMPFS_MAX_NAME - 1)) {
-            inode->name[i] = name[i];
+            tmpfs_inode->name[i] = name[i];
             i++;
         }
-        inode->name[i] = '\0';
+        tmpfs_inode->name[i] = '\0';
     }
 
-    return inode;
+    return tmpfs_inode;
 }
 
 static vnode_t *tmpfs_create_vnode(tmpfs_inode_t *inode) {
     vnode_t *vn = vnode_alloc();
     if (!vn) return NULL;
     
-    vn->ops = &tmpfs_vnode_ops;
+    vn->ops = &tmpfs_ops;
     vn->private_data = inode;
     vn->type = (inode->type == TMPFS_TYPE_DIR) ? VNODE_DIR : VNODE_FILE;
+    for (int i = 0; inode->name[i] != '\0' && i < VFS_MAX_NAME; i++) {
+        vn->name[i] = inode->name[i];
+        vn->name[i + 1] = '\0';
+    }
     inode->vnode = vn;
     
     return vn;
@@ -59,7 +64,7 @@ static vnode_t *tmpfs_create_vnode(tmpfs_inode_t *inode) {
 
 static void tmpfs_add_child(tmpfs_inode_t *dir, tmpfs_inode_t *child) {
     child->next_sibling = dir->first_child;
-    child->first_child = child;
+    dir->first_child = child;
 }
 
 static tmpfs_inode_t *tmpfs_find_child(tmpfs_inode_t *dir, const char *name) {
@@ -78,18 +83,21 @@ int tmpfs_init(void) {
 }
 
 int tmpfs_mount(void *device, vnode_t **root) {
+    (void)device;
+
     if (!root) return -EINVAL;
 
     tmpfs_inode_t *root_inode = tmpfs_alloc_inode(TMPFS_TYPE_DIR, "/", NULL);
     if (!root_inode) return -ENOMEM;
 
-    tmpfs_inode_t *root_vnode = vnode_alloc();
+    vnode_t *root_vnode = tmpfs_create_vnode(root_inode);
     if (!root_vnode) {
         kfree(root_inode);
         return -ENOMEM;
-    };
+    }
 
-    root = root_vnode;
+    root_vnode->parent = root_vnode;
+    *root = root_vnode;
 
     return 0;
 }
@@ -121,19 +129,20 @@ int tmpfs_lookup(vnode_t *dir, const char *name, vnode_t **result) {
 int tmpfs_create(vnode_t *dir, const char *name, vnode_t **result) {
     if (!dir || !name || !result) return -EINVAL;
 
-    tmpfs_inode_t inode = (tmpfs_inode_t *)dir->private_data;
-    if (dir->type != TMPFS_TYPE_DIR) return -EINVAL;
+    tmpfs_inode_t *inode = (tmpfs_inode_t *)dir->private_data;
+    if (!inode) return -EINVAL;
+    if (dir->type != VNODE_DIR) return -EINVAL;
 
-    if (!tmpfs_find_child(inode, name)) return -EEXIST;
+    if (tmpfs_find_child(inode, name)) return -EEXIST;
 
     tmpfs_inode_t *new_inode = tmpfs_alloc_inode(TMPFS_TYPE_FILE, name, inode);
     if (!new_inode) return -ENOMEM;
 
     vnode_t *new_vnode = tmpfs_create_vnode(new_inode);
     if (!new_vnode) {
-        kfree(new_vnode);
-        return -ENOMEM
-    };
+        kfree(new_inode);
+        return -ENOMEM;
+    }
 
     tmpfs_add_child(inode, new_inode);
 
@@ -141,7 +150,7 @@ int tmpfs_create(vnode_t *dir, const char *name, vnode_t **result) {
     return 0;
 }
 
-ssize_t tmpfs_read(vnode_t *vn, void *buf, size_t count, size_t offset) {
+ssize_t tmpfs_read(vnode_t *vn, size_t offset, void *buf, size_t count) {
     if (!vn || !buf) return -EINVAL;
     if (count == 0) return 0;
 
@@ -165,7 +174,7 @@ ssize_t tmpfs_read(vnode_t *vn, void *buf, size_t count, size_t offset) {
     return to_read;
 }
 
-ssize_t tmpfs_write(vnode_t *vn, const void *buf, size_t count, size_t offset) {
+ssize_t tmpfs_write(vnode_t *vn, size_t offset, const void *buf, size_t count) {
     if (!vn || !buf) return -EINVAL;
     if (count == 0) return 0;
 
