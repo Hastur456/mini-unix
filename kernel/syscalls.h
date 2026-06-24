@@ -24,26 +24,64 @@ struct sysent {
     sys_call_t sys_call;
 };
 
-struct sys_read_args {
+typedef struct sys_read_args {
     int fd;
     void *buf;
     uint32_t len;
-};
+} sys_read_args_t;
 
-struct sys_write_args {
+typedef struct sys_write_args {
     int fd;
     const char *buf;
     uint32_t len;
-};
+} sys_write_args_t;
 
-struct sys_open_args {
+typedef struct sys_open_args {
     const char *path;
     int flags;
-};
+} sys_open_args_t;
 
-struct sys_close_args {
+typedef struct sys_close_args {
     int fd;
-};
+} sys_close_args_t;
+
+typedef union sys_args
+{
+    syscallarg_t raw[6];
+
+    sys_close_args_t close;
+    sys_open_args_t open;
+    sys_write_args_t write;
+    sys_read_args_t read;
+
+} sys_args_t;
+
+
+static inline long syscall1(long num, long a1) {
+    long ret;
+    __asm__ volatile ("int $0x80" : "=a"(ret) : "a"(num), "b"(a1) : "memory");
+    return ret;
+}
+static inline long syscall2(long num, long a1, long a2) {
+    long ret;
+    __asm__ volatile ("int $0x80" : "=a"(ret) : "a"(num), "b"(a1), "c"(a2) : "memory");
+    return ret;
+}
+static inline long syscall3(long num, long a1, long a2, long a3) {
+    long ret;
+    __asm__ volatile ("int $0x80" : "=a"(ret) : "a"(num), "b"(a1), "c"(a2), "d"(a3) : "memory");
+    return ret;
+}
+static inline long syscall4(long num, long a1, long a2, long a3, long a4) {
+    long ret;
+    __asm__ volatile ("int $0x80" : "=a"(ret) : "a"(num), "b"(a1), "c"(a2), "d"(a3), "S"(a4) : "memory");
+    return ret;
+}
+static inline long syscall5(long num, long a1, long a2, long a3, long a4, long a5) {
+    long ret;
+    __asm__ volatile ("int $0x80" : "=a"(ret) : "a"(num), "b"(a1), "c"(a2), "d"(a3), "S"(a4), "D"(a5) : "memory");
+    return ret;
+}
 
 void syscalls_init(void);
 void syscall_dispatch(struct interrupt_frame *frame);
