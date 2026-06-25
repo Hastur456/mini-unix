@@ -28,7 +28,7 @@ DEPS := $(C_OBJS:.o=.d) \
         $(FS_C_OBJS:.o=.d) \
         $(TMPFS_C_OBJS:.o=.d) \
         $(PROC_C_OBJS:.o=.d)
-TEST_BINS := $(BUILD_DIR)/test_vfs $(BUILD_DIR)/test_tmpfs
+TEST_BINS := $(BUILD_DIR)/test_vfs $(BUILD_DIR)/test_tmpfs $(BUILD_DIR)/test_syscalls
 
 CFLAGS := -m32 -std=gnu99 -ffreestanding -fno-pie -fno-stack-protector -Wall -Wextra -MMD -MP -I$(KERNEL_DIR) -Dkmain=kernel_main
 TEST_CFLAGS := -std=c99 -Wall -Wextra -I$(KERNEL_DIR) -I$(KERNEL_DIR)/fs
@@ -84,6 +84,18 @@ $(BUILD_DIR)/test_tmpfs: tests/test_tmpfs.c $(KERNEL_DIR)/fs/vfs.c $(KERNEL_DIR)
 		kernel/fs/file.c \
 		kernel/proc/process.c \
 		kernel/fs/tmpfs/tmpfs.c \
+		-o $@
+
+$(BUILD_DIR)/test_syscalls: \
+	tests/test_syscalls.c \
+	$(KERNEL_DIR)/syscalls.c \
+	$(KERNEL_DIR)/syscalls.h \
+	$(KERNEL_DIR)/interrupts.h \
+	$(KERNEL_DIR)/tty.h \
+	$(KERNEL_DIR)/proc/process.h \
+	$(KERNEL_DIR)/fs/vfs.h | dirs
+	$(CC) $(TEST_CFLAGS) \
+		tests/test_syscalls.c \
 		-o $@
 
 test: $(TEST_BINS)
