@@ -6,10 +6,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "vnode.h"
-#include "mount.h"
-#include "file.h"
-#include "../proc/process.h"
+#include "fs/vnode.h"
+#include "fs/mount.h"
+#include "fs/file.h"
+#include "proc/process.h"
 
 #define ENOMEM 12
 #define ENODEV 19
@@ -20,6 +20,9 @@
 #define ENOTDIR 20
 
 #define MAX_FILESYSTEMS 16
+
+struct process;
+typedef struct process process_t;
 
 typedef struct filesystem_type filesystem_t;
 

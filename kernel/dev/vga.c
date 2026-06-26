@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
-#include "vga.h"
-#include "io.h"
+#include "dev/vga.h"
+#include "arch/x86/io.h"
 
 static volatile uint16_t* const VGA_MEMORY = (uint16_t*)0xB8000;
 

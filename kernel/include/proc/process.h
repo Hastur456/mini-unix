@@ -1,9 +1,9 @@
 #ifndef PROC_H
 #define PROC_H
 
-#include "../fs/file.h"
 #include <errno.h>
 #include <stddef.h>
+#include "fs/vfs.h"
 
 #define OPEN_MAX 32
 

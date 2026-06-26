@@ -1,8 +1,8 @@
 #include <stdint.h>
-#include "interrupts.h"
-#include "io.h"
-#include "pic.h"
-#include "timer.h"
+#include "arch/x86/interrupts.h"
+#include "arch/x86/io.h"
+#include "arch/x86/pic.h"
+#include "dev/timer.h"
 
 #define PIT_COMMAND_PORT 0x43
 #define PIT_CHANNEL0_PORT 0x40

@@ -5,8 +5,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "../vnode.h" 
-#include "../mount.h"
+#include "./vnode.h" 
+#include "./mount.h"
 
 #define ENOMEM 12
 #define ENODEV 19

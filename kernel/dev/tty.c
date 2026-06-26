@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
-#include "tty.h"
-#include "vga.h"
+#include "dev/tty.h"
+#include "dev/vga.h"
 
 static int tty_x = 0;
 static int tty_y = 0;

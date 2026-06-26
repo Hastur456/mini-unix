@@ -1,12 +1,13 @@
-#include "interrupts.h"
-#include "keyboard.h"
-#include "pic.h"
-#include "syscalls.h"
-#include "terminal.h"
-#include "timer.h"
-#include "tty.h"
-#include "gdt.h"
+#include "arch/x86/gdt.h"
+#include "arch/x86/interrupts.h"
+#include "arch/x86/pic.h"
 
+#include "dev/keyboard.h"
+#include "dev/terminal.h"
+#include "dev/timer.h"
+#include "dev/tty.h"
+
+#include "proc/syscalls.h"
 
 void kmain() {
     tty_init();
