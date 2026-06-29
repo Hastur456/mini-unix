@@ -4,17 +4,10 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <stdint.h>
+#include <kernel/errno.h>
 
 #include "./vnode.h" 
 #include "./mount.h"
-
-#define ENOMEM 12
-#define ENODEV 19
-#define EINVAL 22
-#define ENOENT 2
-#define EEXIST 17
-#define ENOSPC 28
-#define ENOTDIR 20
 
 #define TMPFS_MAX_NAME 64
 

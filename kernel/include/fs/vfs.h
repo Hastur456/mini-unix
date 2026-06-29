@@ -5,19 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <kernel/errno.h>
 
 #include "fs/vnode.h"
 #include "fs/mount.h"
 #include "fs/file.h"
 #include "proc/process.h"
-
-#define ENOMEM 12
-#define ENODEV 19
-#define EINVAL 22
-#define ENOENT 2
-#define EEXIST 17
-#define ENOSPC 28
-#define ENOTDIR 20
 
 #define MAX_FILESYSTEMS 16
 
