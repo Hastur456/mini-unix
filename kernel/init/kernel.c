@@ -19,9 +19,12 @@ void kmain() {
     pic_init();
     timer_init(100);
     keyboard_init();
-    interrupt_enable();
 
-    write(1, "hello from syscall write\n", 25);
+    vfs_init();
+    
+    tmpfs_init();
+
+    interrupt_enable();
 
     shell_launch();
 }
