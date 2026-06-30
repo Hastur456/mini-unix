@@ -1,7 +1,8 @@
-#include "vfs.h"
-#include "../heap.h"
-#include "../proc/process.h"
-#include "file.h"
+#include "fs/vfs.h"
+#include "fs/file.h"
+
+#include "mm/heap.h"
+
 
 static filesystem_t *registered_fs[MAX_FILESYSTEMS];
 static vnode_t root_vnode;

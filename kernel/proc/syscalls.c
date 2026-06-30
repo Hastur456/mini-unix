@@ -1,4 +1,4 @@
-#include "syscalls.h"
+#include "proc/syscalls.h"
 
 static int sys_nosys(process_t* p, void* uap, int* retval) {
     (void)p;

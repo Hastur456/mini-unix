@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "io.h"
-#include "pic.h"
+#include "arch/x86/io.h"
+#include "arch/x86/pic.h"
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA 0x21

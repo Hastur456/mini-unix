@@ -1,5 +1,5 @@
-#include "tmpfs.h"
-#include "../vfs.h"
+#include "fs/tmpfs.h"
+#include "fs/vfs.h"
 
 extern int str_eq(const char *a, const char *b);
 extern void *kmalloc(size_t size);

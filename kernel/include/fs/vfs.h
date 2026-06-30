@@ -5,21 +5,17 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <kernel/errno.h>
 
-#include "vnode.h"
-#include "mount.h"
-#include "file.h"
-#include "../proc/process.h"
-
-#define ENOMEM 12
-#define ENODEV 19
-#define EINVAL 22
-#define ENOENT 2
-#define EEXIST 17
-#define ENOSPC 28
-#define ENOTDIR 20
+#include "fs/vnode.h"
+#include "fs/mount.h"
+#include "fs/file.h"
+#include "proc/process.h"
 
 #define MAX_FILESYSTEMS 16
+
+struct process;
+typedef struct process process_t;
 
 typedef struct filesystem_type filesystem_t;
 

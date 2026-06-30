@@ -1,6 +1,6 @@
-#include "tty.h"
-#include "keyboard.h"
-#include "terminal.h"
+#include "dev/tty.h"
+#include "dev/keyboard.h"
+#include "dev/terminal.h"
 
 
 static char buffer[COMMAND_BUFFER_SIZE];
