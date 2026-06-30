@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fs/tmpfs/tmpfs.h"
+#include "fs/tmpfs.h"
 #include "fs/vfs.h"
 
 void *kmalloc(size_t size) {

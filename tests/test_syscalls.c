@@ -6,7 +6,7 @@
 
 #define EFAULT 14
 
-#include "syscalls.h"
+#include "proc/syscalls.h"
 
 static interrupt_handler_t registered_handler;
 static uint8_t registered_vector;
@@ -63,7 +63,7 @@ int vfs_close(process_t *p, int fd)
 }
 
 
-#include "syscalls.c"
+#include "../kernel/proc/syscalls.c"
 
 #define ASSERT_EQ_INT(expected, actual) \
     do { \
