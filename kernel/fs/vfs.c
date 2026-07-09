@@ -2,27 +2,11 @@
 #include "fs/file.h"
 
 #include "mm/heap.h"
+#include "string.h"
 
 
 static filesystem_t *registered_fs[MAX_FILESYSTEMS];
 static vnode_t root_vnode;
-
-int str_eq(const char *a, const char *b) {
-    size_t i = 0;
-
-    if (!a || !b) {
-        return 0;
-    }
-
-    while (a[i] != '\0' && b[i] != '\0') {
-        if (a[i] != b[i]) {
-            return 0;
-        }
-        i++;
-    }
-
-    return a[i] == '\0' && b[i] == '\0';
-}
 
 static const char *next_component(const char *path, char *name) {
     size_t len = 0;
@@ -97,7 +81,8 @@ int vfs_register_fs(filesystem_t *fs) {
     }
 
     for (int i = 0; i < MAX_FILESYSTEMS; i++) {
-        if (registered_fs[i] && str_eq(registered_fs[i]->name, fs->name)) {
+        if (registered_fs[i] &&
+            strcmp(registered_fs[i]->name, fs->name) == 0) {
             return -EEXIST;
         }
     }
@@ -118,7 +103,8 @@ filesystem_t *vfs_find_fs(const char *name) {
     }
 
     for (int i = 0; i < MAX_FILESYSTEMS; i++) {
-        if (registered_fs[i] && str_eq(registered_fs[i]->name, name)) {
+        if (registered_fs[i] &&
+            strcmp(registered_fs[i]->name, name) == 0) {
             return registered_fs[i];
         }
     }

@@ -1,7 +1,7 @@
 #include "fs/tmpfs.h"
 #include "fs/vfs.h"
+#include "string.h"
 
-extern int str_eq(const char *a, const char *b);
 extern void *kmalloc(size_t size);
 extern void kfree(void *ptr);
 extern void *krealloc(void *ptr, size_t size);
@@ -71,7 +71,8 @@ static tmpfs_inode_t *tmpfs_find_child(tmpfs_inode_t *dir, const char *name) {
     tmpfs_inode_t *child = dir->first_child;
 
     while(child) {
-        if (str_eq(child->name, name)) return child;
+        if (strcmp(child->name, name) == 0)
+            return child;
         child = child->next_sibling;
     }
 
@@ -108,16 +109,15 @@ int tmpfs_lookup(vnode_t *dir, const char *name, vnode_t **result) {
     tmpfs_inode_t *dir_inode = (tmpfs_inode_t *)dir->private_data;
     if (!dir_inode) return -EINVAL;
 
-    if (str_eq(name, ".")) {
+    if (strcmp(name, ".") == 0) {
         *result = dir;
         return 0;
     }
 
-    if (str_eq(name, "..")) {
+    if (strcmp(name, "..") == 0) {
         *result = dir_inode->parent ? dir_inode->parent->vnode : dir;
         return 0;
     }
-
     tmpfs_inode_t *child = tmpfs_find_child(dir_inode, name);
     if (!child) return -ENOENT;
 
