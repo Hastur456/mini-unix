@@ -13,6 +13,7 @@ static vnode_ops_t tmpfs_ops = {
     .create = tmpfs_create,
     .read = tmpfs_read,
     .write = tmpfs_write,
+    .unlink = tmpfs_unlink,
 };
 
 static filesystem_t tmpfs_fs = {
@@ -164,12 +165,7 @@ ssize_t tmpfs_read(vnode_t *vn, size_t offset, void *buf, size_t count) {
     size_t available = inode->size - offset;
     size_t to_read = (count > available) ? available : count;
 
-    char *dst = (char *)buf;
-    char *src = (char *)inode->data + offset;
-    
-    for (size_t i = 0; i < to_read; i++) {
-        dst[i] = src[i];
-    }
+    memcpy(buf, (char *)inode->data + offset, to_read);
 
     return to_read;
 }
@@ -186,28 +182,68 @@ ssize_t tmpfs_write(vnode_t *vn, size_t offset, const void *buf, size_t count) {
     if (required_size > inode->size) {
         void *new_data = krealloc(inode->data, required_size);
         if (!new_data) {
-            return -ENOSPC; 
+            return -ENOSPC;
         }
+
         inode->data = new_data;
-        
+
         if (offset > inode->size) {
             char *hole_ptr = (char *)inode->data + inode->size;
             size_t hole_size = offset - inode->size;
-            
-            for (size_t i = 0; i < hole_size; i++) {
-                hole_ptr[i] = 0;
-            }
+
+            memset(hole_ptr, 0, hole_size);
         }
-        
+
         inode->size = required_size;
     }
 
-    char *dst = (char *)inode->data + offset;
-    const char *src = (const char *)buf;
-    
-    for (size_t i = 0; i < count; i++) {
-        dst[i] = src[i];
-    }
+    memcpy((char *)inode->data + offset, buf, count);
 
     return count;
+}
+
+int tmpfs_unlink(vnode_t *dir, const char *name) {
+    if (!dir || !name) return -EINVAL;
+
+    tmpfs_inode_t *dir_inode = (tmpfs_inode_t *)dir->private_data;
+    if (!dir_inode || dir->type != VNODE_DIR) return -EINVAL;
+
+    if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+        return -EPERM;
+    }
+
+    tmpfs_inode_t *prev = NULL;
+    tmpfs_inode_t *curr = dir_inode->first_child;
+
+    while (curr) {
+        if (strcmp(curr->name, name) == 0) {
+            break;
+        }
+        prev = curr;
+        curr = curr->next_sibling;
+    }
+
+    if (!curr) return -ENOENT;
+
+    if (curr->type == TMPFS_TYPE_DIR && curr->first_child != NULL) {
+        return -ENOTEMPTY;
+    }
+
+    if (prev) {
+        prev->next_sibling = curr->next_sibling;
+    } else {
+        dir_inode->first_child = curr->next_sibling;
+    }
+
+    if (curr->data) {
+        kfree(curr->data);
+    }
+
+    if (curr->vnode) {
+        kfree(curr->vnode);
+    }
+
+    kfree(curr);
+
+    return 0;
 }
