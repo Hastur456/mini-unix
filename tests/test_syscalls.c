@@ -1,8 +1,9 @@
 #include <stdint.h>
-#include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
+
+#include <lib/string.h>
+#include <kernel/errno.h>
 
 #define EFAULT 14
 
