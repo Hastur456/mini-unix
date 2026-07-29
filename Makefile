@@ -81,13 +81,17 @@ $(BUILD_DIR)/test_vfs: \
 	tests/test_vfs.c \
 	kernel/fs/vfs.c \
 	kernel/fs/file.c \
-	kernel/proc/process.c
+	kernel/proc/process.c \
+	tests/assert.c \
+	kernel/arch/x86/io.c
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(TEST_CFLAGS) \
 		tests/test_vfs.c \
 		kernel/fs/vfs.c \
 		kernel/fs/file.c \
 		kernel/proc/process.c \
+		tests/assert.c \
+		kernel/arch/x86/io.c \
 		-o $@
 
 $(BUILD_DIR)/test_tmpfs: \
@@ -95,7 +99,8 @@ $(BUILD_DIR)/test_tmpfs: \
 	kernel/fs/vfs.c \
 	kernel/fs/file.c \
 	kernel/proc/process.c \
-	kernel/fs/tmpfs/tmpfs.c
+	kernel/fs/tmpfs/tmpfs.c \
+	tests/assert.c
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(TEST_CFLAGS) \
 		tests/test_tmpfs.c \
@@ -103,6 +108,7 @@ $(BUILD_DIR)/test_tmpfs: \
 		kernel/fs/file.c \
 		kernel/proc/process.c \
 		kernel/fs/tmpfs/tmpfs.c \
+		tests/assert.c \
 		-o $@
 
 $(BUILD_DIR)/test_syscalls: tests/test_syscalls.c

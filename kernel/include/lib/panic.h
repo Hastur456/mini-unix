@@ -1,7 +1,6 @@
 #ifndef PANIC_H
 #define PANIC_H
 
-__attribute__((noreturn))
-void panic(const char *msg, const char *file, int line);
+void panic(const char *expr, const char *file, int line, const char *func);
 
 #endif

@@ -1,21 +1,27 @@
 #include <lib/panic.h>
-#include <dev/tty.h>
+#include <lib/print.h>
 
 
-void panic(const char *msg, const char *file, int line) {
+__attribute__((noreturn))
+void panic(const char *expr, const char *file, int line, const char *func)
+{
     __asm__ volatile ("cli");
 
-    tty_write("\n!!! KERNEL PANIC !!!\n");
-    tty_write("Reason: ");
-    tty_write(msg);
-    tty_write("\n");
-    
-    if (file) {
-        tty_write("File: ");
-        tty_write(file);
+    kprint("\n!!! KERNEL PANIC !!!\n");
+
+    if (expr) {
+        kprintf("Assertion failed: %s\n", expr);
     }
 
-    tty_write("\nSystem halted permanently.\n");
+    if (file) {
+        kprintf("Location: %s:%d\n", file, line);
+    }
+
+    if (func) {
+        kprintf("Function: %s\n", func);
+    }
+
+    kprint("\nSystem halted permanently.\n");
 
     while (1) {
         __asm__ volatile ("hlt");
