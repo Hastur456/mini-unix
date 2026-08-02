@@ -1,5 +1,4 @@
 #include <lib/assert.h>
-#include <lib/print.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -16,7 +15,7 @@ void assert_failure(
 {
     ++g_assert_failures;
 
-    kprint("\n=== ASSERTION FAILED ===\n");
+    printf("\n=== ASSERTION FAILED ===\n");
 
     if (expr)
         fprintf(stderr, "Expression: %s\n", expr);
@@ -31,9 +30,10 @@ void assert_failure(
 }
 
 int get_g_assert_failures(void) {
-    if g_assert_failures > 0:
+    if (g_assert_failures > 0) {
         fprintf(stderr,
                 "\n%d assertion(s) failed\n",
                 g_assert_failures);
+    }
     return g_assert_failures;
 }
