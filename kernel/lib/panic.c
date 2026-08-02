@@ -1,6 +1,4 @@
 #include <lib/panic.h>
-#include <lib/print.h>
-
 
 __attribute__((noreturn))
 void panic(const char *expr, const char *file, int line, const char *func)

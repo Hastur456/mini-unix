@@ -2,10 +2,10 @@
 #define SYSCALLS_H
 
 #include <stdint.h>
-#include "arch/x86/interrupts.h"
-#include "dev/tty.h"
-#include "proc/process.h"
-#include "fs/vfs.h"
+#include <arch/x86/interrupts.h>
+#include <dev/tty.h>
+#include <proc/process.h>
+#include <fs/vfs.h>
 
 #define SYSCALL_VECTOR 0x80
 

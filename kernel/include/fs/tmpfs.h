@@ -5,9 +5,11 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <kernel/errno.h>
+#include <fs/vfs.h>
+#include <lib/string.h>
 
-#include "./vnode.h" 
-#include "./mount.h"
+#include <fs/vnode.h>
+#include <fs/mount.h>
 
 #define TMPFS_MAX_NAME 64
 

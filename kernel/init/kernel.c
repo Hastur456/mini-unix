@@ -1,13 +1,13 @@
-#include "arch/x86/gdt.h"
-#include "arch/x86/interrupts.h"
-#include "arch/x86/pic.h"
+#include <arch/x86/gdt.h>
+#include <arch/x86/interrupts.h>
+#include <arch/x86/pic.h>
 
-#include "dev/keyboard.h"
-#include "dev/terminal.h"
-#include "dev/timer.h"
-#include "dev/tty.h"
+#include <dev/keyboard.h>
+#include <dev/terminal.h>
+#include <dev/timer.h>
+#include <dev/tty.h>
 
-#include "proc/syscalls.h"
+#include <proc/syscalls.h>
 
 void kmain() {
     tty_init();
@@ -21,7 +21,6 @@ void kmain() {
     keyboard_init();
 
     vfs_init();
-    
     tmpfs_init();
 
     interrupt_enable();

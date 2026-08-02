@@ -1,6 +1,10 @@
 #ifndef ASSERT_H
 #define ASSERT_H
 
+#include <lib/panic.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

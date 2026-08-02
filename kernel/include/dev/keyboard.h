@@ -2,6 +2,9 @@
 #define KEYBOARD_H
 
 #include <stdint.h>
+#include <arch/x86/interrupts.h>
+#include <arch/x86/io.h>
+#include <arch/x86/pic.h>
 
 #define KB_SCANCODE_PORT 0x60
 #define KB_STATUS_PORT 0x64

@@ -2,6 +2,7 @@
 #define PIC_H
 
 #include <stdint.h>
+#include <arch/x86/io.h>
 
 #define PIC_IRQ_COUNT 16
 

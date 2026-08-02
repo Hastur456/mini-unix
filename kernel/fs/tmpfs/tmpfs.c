@@ -1,6 +1,4 @@
-#include "fs/tmpfs.h"
-#include "fs/vfs.h"
-#include "string.h"
+#include <fs/tmpfs.h>
 
 extern void *kmalloc(size_t size);
 extern void kfree(void *ptr);

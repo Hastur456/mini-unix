@@ -1,6 +1,4 @@
 #include <lib/print.h>
-#include <lib/stdarg.h>
-
 
 static void print_unsigned(unsigned int value, unsigned int base)
 {

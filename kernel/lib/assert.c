@@ -1,8 +1,5 @@
 #include <lib/assert.h>
-#include <lib/panic.h>
 
-
-// __attribute__((weak))
 __attribute__((noreturn))
 void assert_failure(
     const char *expr,

@@ -2,6 +2,8 @@
 #define IDT_H
 
 #include <stdint.h>
+#include <arch/x86/interrupts.h>
+#include <proc/syscalls.h>
 
 void idt_init(void);
 void idt_set_gate(uint8_t vector, uint32_t handler, uint16_t selector, uint8_t flags);

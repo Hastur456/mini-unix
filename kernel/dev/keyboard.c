@@ -1,8 +1,4 @@
-#include <stdint.h>
-#include "dev/keyboard.h"
-#include "arch/x86/interrupts.h"
-#include "arch/x86/io.h"
-#include "arch/x86/pic.h"
+#include <dev/keyboard.h>
 
 #define KEYBOARD_IRQ 1
 #define KEYBOARD_VECTOR (IRQ_BASE + KEYBOARD_IRQ)

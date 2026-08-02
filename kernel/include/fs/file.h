@@ -2,6 +2,8 @@
 #define FILE_H
 
 #include <stdint.h>
+#include <fs/vnode.h>
+#include <mm/heap.h>
 
 #define O_RDONLY    0x00
 #define O_WRONLY    0x01

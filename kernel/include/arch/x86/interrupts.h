@@ -2,6 +2,9 @@
 #define INTERRUPTS_H
 
 #include <stdint.h>
+#include <arch/x86/idt.h>
+#include <arch/x86/pic.h>
+#include <dev/tty.h>
 
 #define INTERRUPT_VECTOR_COUNT 256
 #define IRQ_BASE 32

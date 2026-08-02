@@ -1,12 +1,8 @@
 #include <lib/assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-
 
 int g_assert_failures = 0;
 
 __attribute__((weak))
-// __attribute__((noreturn))
 void assert_failure(
     const char *expr,
     const char *file,

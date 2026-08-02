@@ -1,8 +1,5 @@
-#include <stdint.h>
-#include "arch/x86/interrupts.h"
-#include "arch/x86/idt.h"
-#include "arch/x86/pic.h"
-#include "dev/tty.h"
+#include <arch/x86/interrupts.h>
+
 
 static interrupt_handler_t handlers[INTERRUPT_VECTOR_COUNT];
 
