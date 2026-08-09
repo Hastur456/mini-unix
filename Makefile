@@ -50,7 +50,8 @@ LDFLAGS := -m elf_i386 -T link.ld -nostdlib
 TEST_BINS := \
 	$(BUILD_DIR)/test_vfs \
 	$(BUILD_DIR)/test_tmpfs \
-	$(BUILD_DIR)/test_syscalls
+	$(BUILD_DIR)/test_syscalls \
+	$(BUILD_DIR)/test_list
 
 .PHONY: all run test clean dirs
 
@@ -108,6 +109,17 @@ $(BUILD_DIR)/test_tmpfs: \
 		kernel/fs/file.c \
 		kernel/proc/process.c \
 		kernel/fs/tmpfs/tmpfs.c \
+		tests/assert.c \
+		-o $@
+
+$(BUILD_DIR)/test_list: \
+	tests/test_list.c \
+	kernel/lib/list.c \
+	tests/assert.c
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(TEST_CFLAGS) \
+		tests/test_list.c \
+		kernel/lib/list.c \
 		tests/assert.c \
 		-o $@
 

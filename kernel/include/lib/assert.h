@@ -14,6 +14,8 @@ void assert_failure(const char *expr,
                     int line,
                     const char *func);
 
+int get_g_assert_failures(void);
+
 #ifdef __cplusplus
 }
 #endif
