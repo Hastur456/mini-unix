@@ -51,7 +51,8 @@ TEST_BINS := \
 	$(BUILD_DIR)/test_vfs \
 	$(BUILD_DIR)/test_tmpfs \
 	$(BUILD_DIR)/test_syscalls \
-	$(BUILD_DIR)/test_list
+	$(BUILD_DIR)/test_list \
+	$(BUILD_DIR)/test_bitmap
 
 .PHONY: all run test clean dirs
 
@@ -120,6 +121,17 @@ $(BUILD_DIR)/test_list: \
 	$(CC) $(TEST_CFLAGS) \
 		tests/test_list.c \
 		kernel/lib/list.c \
+		tests/assert.c \
+		-o $@
+
+$(BUILD_DIR)/test_bitmap: \
+	tests/test_bitmap.c \
+	kernel/lib/bitmap.c \
+	tests/assert.c
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(TEST_CFLAGS) \
+		tests/test_bitmap.c \
+		kernel/lib/bitmap.c \
 		tests/assert.c \
 		-o $@
 
