@@ -35,14 +35,14 @@ CFLAGS := \
 	-Wextra \
 	-MMD \
 	-MP \
-	-I$(KERNEL_DIR)/include \
+	-Iinclude \
 	-Dkmain=kernel_main
 
 TEST_CFLAGS := \
 	-std=c99 \
 	-Wall \
 	-Wextra \
-	-I$(KERNEL_DIR)/include
+	-Iinclude
 
 ASFLAGS := -f elf32
 LDFLAGS := -m elf_i386 -T link.ld -nostdlib
