@@ -263,6 +263,290 @@ static void test_bitmap_find_not_found(void)
     ASSERT(bitmap_find_next_set(&bitmap, 0) == bitmap.bits);
 }
 
+static void test_bitmap_assign(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    bitmap_assign(&bitmap, 3, 1);
+    ASSERT(bitmap_test(&bitmap, 3) != 0);
+
+    bitmap_assign(&bitmap, 3, 0);
+    ASSERT(bitmap_test(&bitmap, 3) == 0);
+
+    bitmap_assign(&bitmap, 10, 1);
+    ASSERT(bitmap_test(&bitmap, 10) != 0);
+}
+
+static void test_bitmap_toggle(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    bitmap_toggle(&bitmap, 3);
+    ASSERT(bitmap_test(&bitmap, 3) != 0);
+
+    bitmap_toggle(&bitmap, 3);
+    ASSERT(bitmap_test(&bitmap, 3) == 0);
+
+    bitmap_toggle(&bitmap, 12);
+    ASSERT(bitmap_test(&bitmap, 12) != 0);
+
+    bitmap_toggle(&bitmap, 12);
+    ASSERT(bitmap_test(&bitmap, 12) == 0);
+}
+
+static void test_bitmap_test_clear(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    bitmap_set(&bitmap, 4);
+    bitmap_set(&bitmap, 9);
+
+    ASSERT(bitmap_test_clear(&bitmap, 4) != 0);
+    ASSERT(bitmap_test(&bitmap, 4) == 0);
+
+    ASSERT(bitmap_test_clear(&bitmap, 9) != 0);
+    ASSERT(bitmap_test(&bitmap, 9) == 0);
+
+    ASSERT(bitmap_test_clear(&bitmap, 5) == 0);
+    ASSERT(bitmap_test(&bitmap, 5) == 0);
+}
+
+static void test_bitmap_set_range(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    bitmap_set_range(&bitmap, 2, 4);
+
+    ASSERT(bitmap_test(&bitmap, 0) == 0);
+    ASSERT(bitmap_test(&bitmap, 1) == 0);
+    ASSERT(bitmap_test(&bitmap, 2) != 0);
+    ASSERT(bitmap_test(&bitmap, 3) != 0);
+    ASSERT(bitmap_test(&bitmap, 4) != 0);
+    ASSERT(bitmap_test(&bitmap, 5) != 0);
+    ASSERT(bitmap_test(&bitmap, 6) == 0);
+
+    bitmap_set_range(&bitmap, 10, 3);
+
+    ASSERT(bitmap_test(&bitmap, 10) != 0);
+    ASSERT(bitmap_test(&bitmap, 11) != 0);
+    ASSERT(bitmap_test(&bitmap, 12) != 0);
+}
+
+static void test_bitmap_clear_range(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_fill(&bitmap);
+
+    bitmap_clear_range(&bitmap, 2, 4);
+
+    ASSERT(bitmap_test(&bitmap, 0) != 0);
+    ASSERT(bitmap_test(&bitmap, 1) != 0);
+    ASSERT(bitmap_test(&bitmap, 2) == 0);
+    ASSERT(bitmap_test(&bitmap, 3) == 0);
+    ASSERT(bitmap_test(&bitmap, 4) == 0);
+    ASSERT(bitmap_test(&bitmap, 5) == 0);
+    ASSERT(bitmap_test(&bitmap, 6) != 0);
+
+    bitmap_clear_range(&bitmap, 10, 3);
+
+    ASSERT(bitmap_test(&bitmap, 10) == 0);
+    ASSERT(bitmap_test(&bitmap, 11) == 0);
+    ASSERT(bitmap_test(&bitmap, 12) == 0);
+}
+
+static void test_bitmap_find_zero_area(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    ASSERT(bitmap_find_zero_area(&bitmap, 1) == 0);
+    ASSERT(bitmap_find_zero_area(&bitmap, 3) == 0);
+    ASSERT(bitmap_find_zero_area(&bitmap, TEST_BITS) == 0);
+    ASSERT(bitmap_find_zero_area(&bitmap, TEST_BITS + 1) == BITMAP_ERROR);
+    ASSERT(bitmap_find_zero_area(&bitmap, 0) == BITMAP_ERROR);
+
+    bitmap_set(&bitmap, 0);
+    bitmap_set(&bitmap, 1);
+
+    ASSERT(bitmap_find_zero_area(&bitmap, 2) == 2);
+
+    bitmap_set(&bitmap, 2);
+    bitmap_set(&bitmap, 3);
+
+    ASSERT(bitmap_find_zero_area(&bitmap, 2) == 4);
+
+    bitmap_set_range(&bitmap, 4, 4);
+
+    ASSERT(bitmap_find_zero_area(&bitmap, 3) == 8);
+
+    bitmap_fill(&bitmap);
+
+    ASSERT(bitmap_find_zero_area(&bitmap, 1) == bitmap_bits(&bitmap));
+}
+
+static void test_bitmap_count_set(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    ASSERT(bitmap_count_set(&bitmap) == 0);
+
+    bitmap_set(&bitmap, 0);
+    ASSERT(bitmap_count_set(&bitmap) == 1);
+
+    bitmap_set(&bitmap, 3);
+    bitmap_set(&bitmap, 7);
+    bitmap_set(&bitmap, 12);
+
+    ASSERT(bitmap_count_set(&bitmap) == 4);
+
+    bitmap_fill(&bitmap);
+
+    ASSERT(bitmap_count_set(&bitmap) == TEST_BITS);
+}
+
+static void test_bitmap_count_clear(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    ASSERT(bitmap_count_clear(&bitmap) == TEST_BITS);
+
+    bitmap_set(&bitmap, 0);
+    ASSERT(bitmap_count_clear(&bitmap) == TEST_BITS - 1);
+
+    bitmap_set(&bitmap, 5);
+    bitmap_set(&bitmap, 12);
+
+    ASSERT(bitmap_count_clear(&bitmap) == TEST_BITS - 3);
+
+    bitmap_fill(&bitmap);
+
+    ASSERT(bitmap_count_clear(&bitmap) == 0);
+}
+
+static void test_bitmap_test_range(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    bitmap_set_range(&bitmap, 2, 4);
+
+    ASSERT(bitmap_test_range(&bitmap, 2, 4) != 0);
+    ASSERT(bitmap_test_range(&bitmap, 3, 2) != 0);
+    ASSERT(bitmap_test_range(&bitmap, 1, 4) == 0);
+    ASSERT(bitmap_test_range(&bitmap, 6, 1) == 0);
+
+    ASSERT(bitmap_test_range(&bitmap, 0, 0) != 0);
+}
+
+static void test_bitmap_test_range_clear(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+    bitmap_zero(&bitmap);
+
+    ASSERT(bitmap_test_range_clear(&bitmap, 0, TEST_BITS) != 0);
+
+    bitmap_set_range(&bitmap, 2, 4);
+
+    ASSERT(bitmap_test_range_clear(&bitmap, 0, 2) != 0);
+    ASSERT(bitmap_test_range_clear(&bitmap, 6, 7) != 0);
+    ASSERT(bitmap_test_range_clear(&bitmap, 1, 3) == 0);
+    ASSERT(bitmap_test_range_clear(&bitmap, 2, 4) == 0);
+}
+
+static void test_bitmap_empty(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+
+    bitmap_zero(&bitmap);
+    ASSERT(bitmap_empty(&bitmap) != 0);
+
+    bitmap_set(&bitmap, 0);
+    ASSERT(bitmap_empty(&bitmap) == 0);
+
+    bitmap_zero(&bitmap);
+    ASSERT(bitmap_empty(&bitmap) != 0);
+}
+
+static void test_bitmap_full(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+
+    bitmap_zero(&bitmap);
+    ASSERT(bitmap_full(&bitmap) == 0);
+
+    bitmap_fill(&bitmap);
+    ASSERT(bitmap_full(&bitmap) != 0);
+
+    bitmap_clear(&bitmap, 12);
+    ASSERT(bitmap_full(&bitmap) == 0);
+}
+
+static void test_bitmap_invalid(void)
+{
+    uint8_t data[TEST_BYTES];
+    struct bitmap bitmap;
+
+    bitmap_init(&bitmap, data, TEST_BITS);
+
+    ASSERT(bitmap_find_first_clear(NULL) == BITMAP_ERROR);
+    ASSERT(bitmap_find_first_set(NULL) == BITMAP_ERROR);
+    ASSERT(bitmap_find_next_clear(NULL, 0) == BITMAP_ERROR);
+    ASSERT(bitmap_find_next_set(NULL, 0) == BITMAP_ERROR);
+    ASSERT(bitmap_find_zero_area(NULL, 1) == BITMAP_ERROR);
+    ASSERT(bitmap_count_set(NULL) == BITMAP_ERROR);
+
+    bitmap.data = NULL;
+
+    ASSERT(bitmap_find_first_clear(&bitmap) == BITMAP_ERROR);
+    ASSERT(bitmap_find_first_set(&bitmap) == BITMAP_ERROR);
+    ASSERT(bitmap_find_next_clear(&bitmap, 0) == BITMAP_ERROR);
+    ASSERT(bitmap_find_next_set(&bitmap, 0) == BITMAP_ERROR);
+    ASSERT(bitmap_find_zero_area(&bitmap, 1) == BITMAP_ERROR);
+    ASSERT(bitmap_count_set(&bitmap) == BITMAP_ERROR);
+}
+
 int main(void)
 {
     test_bitmap_size();
@@ -272,12 +556,34 @@ int main(void)
     test_bitmap_set();
     test_bitmap_clear();
     test_bitmap_test();
+    test_bitmap_assign();
+    test_bitmap_toggle();
+    test_bitmap_test_clear();
+    test_bitmap_set_range();
+    test_bitmap_clear_range();
     test_bitmap_find_first_clear();
     test_bitmap_find_first_set();
     test_bitmap_find_next_clear();
     test_bitmap_find_next_set();
+    test_bitmap_find_zero_area();
+    test_bitmap_count_set();
+    test_bitmap_count_clear();
+    test_bitmap_test_range();
+    test_bitmap_test_range_clear();
+    test_bitmap_empty();
+    test_bitmap_full();
     test_bitmap_boundaries();
     test_bitmap_find_not_found();
+    test_bitmap_invalid();
+
+    int num_failures = get_g_assert_failures();
+
+    if (num_failures) {
+        printf("test_bitmap: number of failures: %i\n", num_failures);
+    }
+    else {
+        printf("test_bitmap: ok.\n");
+    }
 
     return 0;
 }

@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define BITMAP_ERROR SIZE_MAX
+
 struct bitmap {
     uint8_t *data;
     size_t bits;
