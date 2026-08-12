@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <arch/x86/io.h>
 
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25

@@ -1,11 +1,13 @@
-#include <assert.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include "fs/vfs.h"
+#include <lib/assert.h>
+#include <fs/tmpfs.h>
+#include <fs/vfs.h>
+#include <lib/string.h>
+#include <kernel/errno.h>
+
 
 static uint32_t next_inode = 1;
 
@@ -36,7 +38,7 @@ typedef struct test_node {
 
 static test_node_t *make_node(const char *name, vnode_type_t type) {
     test_node_t *node = calloc(1, sizeof(test_node_t));
-    assert(node);
+    ASSERT(node);
 
     node->vnode.type = type;
     strncpy(node->vnode.name, name, VFS_MAX_NAME);
@@ -50,7 +52,7 @@ static test_node_t *make_node(const char *name, vnode_type_t type) {
 }
 
 static void add_child(test_node_t *parent, test_node_t *child) {
-    assert(parent->child_count < 8);
+    ASSERT(parent->child_count < 8);
     parent->children[parent->child_count++] = child;
     child->vnode.parent = &parent->vnode;
 }
@@ -87,12 +89,12 @@ static filesystem_t memfs = {
 static void test_register_and_find_fs(void) {
     vfs_init();
 
-    assert(vfs_register_fs(NULL) == -EINVAL);
-    assert(vfs_find_fs("memfs") == NULL);
-    assert(vfs_register_fs(&memfs) == 0);
-    assert(vfs_find_fs("memfs") == &memfs);
-    assert(vfs_register_fs(&memfs) == -EEXIST);
-    assert(vfs_find_fs("missing") == NULL);
+    ASSERT(vfs_register_fs(NULL) == -EINVAL);
+    ASSERT(vfs_find_fs("memfs") == NULL);
+    ASSERT(vfs_register_fs(&memfs) == 0);
+    ASSERT(vfs_find_fs("memfs") == &memfs);
+    ASSERT(vfs_register_fs(&memfs) == -EEXIST);
+    ASSERT(vfs_find_fs("missing") == NULL);
 }
 
 static void test_mount_root_and_lookup_nested_path(void) {
@@ -106,17 +108,17 @@ static void test_mount_root_and_lookup_nested_path(void) {
     add_child(etc, conf);
 
     vfs_init();
-    assert(vfs_register_fs(&memfs) == 0);
-    assert(vfs_mount("/", "memfs", &dev) == 0);
+    ASSERT(vfs_register_fs(&memfs) == 0);
+    ASSERT(vfs_mount("/", "memfs", &dev) == 0);
 
-    assert(vfs_lookup("/", &found) == 0);
-    assert(found == &root->vnode);
+    ASSERT(vfs_lookup("/", &found) == 0);
+    ASSERT(found == &root->vnode);
 
-    assert(vfs_lookup("/etc/conf", &found) == 0);
-    assert(found == &conf->vnode);
+    ASSERT(vfs_lookup("/etc/conf", &found) == 0);
+    ASSERT(found == &conf->vnode);
 
-    assert(vfs_lookup("//etc///conf", &found) == 0);
-    assert(found == &conf->vnode);
+    ASSERT(vfs_lookup("//etc///conf", &found) == 0);
+    ASSERT(found == &conf->vnode);
 }
 
 static void test_lookup_errors(void) {
@@ -128,12 +130,12 @@ static void test_lookup_errors(void) {
     add_child(root, file);
 
     vfs_init();
-    assert(vfs_register_fs(&memfs) == 0);
-    assert(vfs_mount("/", "memfs", &dev) == 0);
+    ASSERT(vfs_register_fs(&memfs) == 0);
+    ASSERT(vfs_mount("/", "memfs", &dev) == 0);
 
-    assert(vfs_lookup("relative", &found) == -EINVAL);
-    assert(vfs_lookup("/missing", &found) == -ENOENT);
-    assert(vfs_lookup("/file/child", &found) == -ENOTDIR);
+    ASSERT(vfs_lookup("relative", &found) == -EINVAL);
+    ASSERT(vfs_lookup("/missing", &found) == -ENOENT);
+    ASSERT(vfs_lookup("/file/child", &found) == -ENOTDIR);
 }
 
 static void test_mount_errors(void) {
@@ -142,9 +144,9 @@ static void test_mount_errors(void) {
 
     vfs_init();
 
-    assert(vfs_mount("/", "memfs", &dev) == -ENODEV);
-    assert(vfs_register_fs(&memfs) == 0);
-    assert(vfs_mount("/missing", "memfs", &dev) < 0);
+    ASSERT(vfs_mount("/", "memfs", &dev) == -ENODEV);
+    ASSERT(vfs_register_fs(&memfs) == 0);
+    ASSERT(vfs_mount("/missing", "memfs", &dev) < 0);
 }
 
 int main(void) {

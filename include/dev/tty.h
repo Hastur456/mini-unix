@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "dev/tty.h"
-#include "dev/vga.h"
+#include <dev/vga.h>
 
 void tty_init();
 void tty_putchar(char c);

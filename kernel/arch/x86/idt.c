@@ -1,9 +1,6 @@
 // Interrupt Descriptor Table
 
-#include <stdint.h>
-#include "arch/x86/idt.h"
-#include "arch/x86/interrupts.h"
-#include "proc/syscalls.h"
+#include <arch/x86/idt.h>
 
 #define IDT_ENTRIES 256
 #define KERNEL_CODE_SELECTOR 0x08

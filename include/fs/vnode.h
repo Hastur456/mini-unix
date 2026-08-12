@@ -47,6 +47,11 @@ typedef struct vnode_ops {
         const char *name,
         struct vnode **result
     );
+
+    int (*unlink)(
+        struct vnode *dir,
+        const char *name
+    );
 } vnode_ops_t;
 
 

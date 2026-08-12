@@ -3,7 +3,7 @@
 
 #include <errno.h>
 #include <stddef.h>
-#include "fs/vfs.h"
+#include <fs/vfs.h>
 
 #define OPEN_MAX 32
 

@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include <stddef.h>
-#include "mm/heap.h"
-
+#include <mm/heap.h>
 
 static uint8_t *heap_start;
 static uint8_t *heap_current;

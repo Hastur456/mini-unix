@@ -35,14 +35,14 @@ CFLAGS := \
 	-Wextra \
 	-MMD \
 	-MP \
-	-I$(KERNEL_DIR)/include \
+	-Iinclude \
 	-Dkmain=kernel_main
 
 TEST_CFLAGS := \
 	-std=c99 \
 	-Wall \
 	-Wextra \
-	-I$(KERNEL_DIR)/include
+	-Iinclude
 
 ASFLAGS := -f elf32
 LDFLAGS := -m elf_i386 -T link.ld -nostdlib
@@ -50,7 +50,9 @@ LDFLAGS := -m elf_i386 -T link.ld -nostdlib
 TEST_BINS := \
 	$(BUILD_DIR)/test_vfs \
 	$(BUILD_DIR)/test_tmpfs \
-	$(BUILD_DIR)/test_syscalls
+	$(BUILD_DIR)/test_syscalls \
+	$(BUILD_DIR)/test_list \
+	$(BUILD_DIR)/test_bitmap
 
 .PHONY: all run test clean dirs
 
@@ -81,13 +83,17 @@ $(BUILD_DIR)/test_vfs: \
 	tests/test_vfs.c \
 	kernel/fs/vfs.c \
 	kernel/fs/file.c \
-	kernel/proc/process.c
+	kernel/proc/process.c \
+	tests/assert.c \
+	kernel/arch/x86/io.c
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(TEST_CFLAGS) \
 		tests/test_vfs.c \
 		kernel/fs/vfs.c \
 		kernel/fs/file.c \
 		kernel/proc/process.c \
+		tests/assert.c \
+		kernel/arch/x86/io.c \
 		-o $@
 
 $(BUILD_DIR)/test_tmpfs: \
@@ -95,7 +101,8 @@ $(BUILD_DIR)/test_tmpfs: \
 	kernel/fs/vfs.c \
 	kernel/fs/file.c \
 	kernel/proc/process.c \
-	kernel/fs/tmpfs/tmpfs.c
+	kernel/fs/tmpfs/tmpfs.c \
+	tests/assert.c
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(TEST_CFLAGS) \
 		tests/test_tmpfs.c \
@@ -103,6 +110,29 @@ $(BUILD_DIR)/test_tmpfs: \
 		kernel/fs/file.c \
 		kernel/proc/process.c \
 		kernel/fs/tmpfs/tmpfs.c \
+		tests/assert.c \
+		-o $@
+
+$(BUILD_DIR)/test_list: \
+	tests/test_list.c \
+	kernel/lib/list.c \
+	tests/assert.c
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(TEST_CFLAGS) \
+		tests/test_list.c \
+		kernel/lib/list.c \
+		tests/assert.c \
+		-o $@
+
+$(BUILD_DIR)/test_bitmap: \
+	tests/test_bitmap.c \
+	kernel/lib/bitmap.c \
+	tests/assert.c
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(TEST_CFLAGS) \
+		tests/test_bitmap.c \
+		kernel/lib/bitmap.c \
+		tests/assert.c \
 		-o $@
 
 $(BUILD_DIR)/test_syscalls: tests/test_syscalls.c

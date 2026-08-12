@@ -7,10 +7,12 @@
 #include <stddef.h>
 #include <kernel/errno.h>
 
-#include "fs/vnode.h"
-#include "fs/mount.h"
-#include "fs/file.h"
-#include "proc/process.h"
+#include <fs/vnode.h>
+#include <fs/mount.h>
+#include <fs/file.h>
+#include <proc/process.h>
+#include <mm/heap.h>
+#include <lib/string.h>
 
 #define MAX_FILESYSTEMS 16
 

@@ -1,33 +1,8 @@
-#include "dev/tty.h"
-#include "dev/keyboard.h"
-#include "dev/terminal.h"
+#include <dev/terminal.h>
 
 
 static char buffer[COMMAND_BUFFER_SIZE];
 static int len = 0;
-
-static int str_eq(const char* a, const char* b) {
-    int i = 0;
-
-    while (a[i] != '\0' && b[i] != '\0') {
-        if (a[i] != b[i]) {
-            return 0;
-        }
-        i++;
-    }
-    return a[i] == '\0' && b[i] == '\0';
-}
-
-static int str_starts_with(const char* str, const char* prefix) {
-    int i = 0;
-    while (prefix[i] != '\0') {
-        if (str[i] != prefix[i]) {
-            return 0;
-        }
-        i++;
-    }
-    return 1;
-}
 
 static void put_at_buffer(char c) {
     buffer[len] = c;
@@ -43,7 +18,7 @@ static void clear_buffer(void) {
 }
 
 static void shell_prompt(void) {
-    tty_write("\n> ");
+    tty_write("> ");
 }
 
 static void buffer_backspace(void) {
@@ -67,24 +42,29 @@ static void print_buffer(void) {
 }
 
 static void command_execute(const char* command) {
-    if (str_eq(command, "")) return;
-    if (str_eq(command, "help")) {
+    if (strcmp(command, "") == 0) return;
+
+    if (strcmp(command, "help") == 0) {
         tty_write("Commands: help, clear, echo <text>");
+        tty_write("\n");
         return;
     }
 
-    if (str_eq(command, "clear")) {
+    if (strcmp(command, "clear") == 0) {
         tty_init();
         return;
     }
 
-    if (str_starts_with(command, "echo ")) {
+    if (strncmp(command, "echo ", 5) == 0) {
         tty_write(command + 5);
+        tty_write("\n");
+
         return;
     }
 
     tty_write("Unknown command: ");
     tty_write(command);
+    tty_write("\n");
 }
 
 static void command_buffer_submit(void) {

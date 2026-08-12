@@ -1,4 +1,4 @@
-#include "proc/process.h"
+#include <proc/process.h>
 
 
 void process_init(process_t *proc) {

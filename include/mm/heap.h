@@ -2,6 +2,7 @@
 #define HEAP_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 void heap_init(void *start, size_t size);
 
