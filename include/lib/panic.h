@@ -2,7 +2,7 @@
 #define PANIC_H
 
 #include <lib/print.h>
-#include <lib/stdarg.h>
+#include <stdarg.h>
 
 void panic(const char *expr, const char *file, int line, const char *func);
 

@@ -2,7 +2,7 @@
 #define PRINT_H
 
 #include <dev/tty.h>
-#include <lib/stdarg.h>
+#include <stdarg.h>
 
 void kprint(const char *str);
 
