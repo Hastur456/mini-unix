@@ -15,6 +15,7 @@
 #define SYS_WRITE  4
 #define SYS_OPEN   5
 #define SYS_CLOSE  6
+#define SYS_CREATE 7
 
 typedef int syscallarg_t;
 typedef int (*sys_call_t)(process_t *p, void *uap, int *retval);
@@ -45,14 +46,19 @@ typedef struct sys_close_args {
     int fd;
 } sys_close_args_t;
 
+typedef struct sys_create_args {
+    const char *path;
+} sys_create_args_t;
+
 typedef union sys_args
 {
-    syscallarg_t raw[6];
+    syscallarg_t raw[7];
 
     sys_close_args_t close;
     sys_open_args_t open;
     sys_write_args_t write;
     sys_read_args_t read;
+    sys_create_args_t create;
 
 } sys_args_t;
 
@@ -90,5 +96,6 @@ int open(const char *path, int flags);
 int close(int fd);
 int read(int fd, void *buf, uint32_t len);
 int write(int fd, const char *buf, uint32_t len);
+int create(const char *path);
 
 #endif

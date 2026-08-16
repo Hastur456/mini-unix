@@ -198,13 +198,19 @@ int vfs_open(process_t *current_proc, const char *path, int flags) {
     int err;
 
     err = vfs_lookup(path, &vnode);
-    if (err < 0) return err;
+    if (err < 0) {
+        return err;
+    }
 
     int fd = process_alloc_fd(current_proc);
-    if (fd < 0) return fd;
+    if (fd < 0) {
+        return fd;
+    }
 
     file_t *f = file_create(vnode, flags);
-    if (!f) return -ENOMEM;
+    if (!f) {
+        return -ENOMEM;
+    }
 
     current_proc->files[fd] = f;
 
@@ -269,4 +275,80 @@ ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count) {
     file->offset += bytes_write;
 
     return bytes_write;
+}
+
+int vfs_create(const char *path, vnode_t **result) {
+    vnode_t *current;
+    vnode_t *child;
+    const char *next;
+    char name[VFS_MAX_NAME + 1];
+
+    if (!path || !result || path[0] != '/') {
+        return -EINVAL;
+    }
+
+    if (strcmp(path, "/") == 0) {
+        return -EEXIST;
+    }
+
+    current = mounted_root(&root_vnode);
+    next = path;
+
+    while (1) {
+        const char *component_end;
+
+        component_end = next_component(next, name);
+        if (!component_end) {
+            return -EINVAL;
+        }
+
+        next = component_end;
+
+        while (*next == '/') {
+            next++;
+        }
+
+        current = mounted_root(current);
+
+        if (*next == '\0') {
+            break;
+        }
+
+        if (!current->ops || !current->ops->lookup) {
+            return -ENOTDIR;
+        }
+
+        child = NULL;
+
+        if (current->ops->lookup(current, name, &child) < 0) {
+            return -ENOENT;
+        }
+
+        if (!child) {
+            return -ENOENT;
+        }
+
+        current = child;
+    }
+
+    if (!current->ops || !current->ops->create) {
+        return -ENOSYS;
+    }
+
+    child = NULL;
+
+    if (current->ops->lookup(current, name, &child) == 0) {
+        return -EEXIST;
+    }
+
+    if (current->ops->create(current, name, &child) < 0) {
+        return -EIO;
+    }
+
+    if (!child) {
+        return -EINVAL;
+    }
+
+    *result = child;
+    return 0;
 }

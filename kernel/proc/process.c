@@ -19,10 +19,12 @@ int process_alloc_fd(process_t *proc) {
     return -EMFILE;
 }
 
-file_t *process_get_file(process_t *proc, int fd) {
+file_t *process_get_file(process_t *proc, int fd)
+{
     if (!proc) return NULL;
 
-    if (fd <= 0 || fd > OPEN_MAX) return NULL;
+    if (fd < 0 || fd >= OPEN_MAX)
+        return NULL;
 
     return proc->files[fd];
 }

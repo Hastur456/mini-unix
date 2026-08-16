@@ -12,6 +12,7 @@ static vnode_ops_t tmpfs_ops = {
     .read = tmpfs_read,
     .write = tmpfs_write,
     .unlink = tmpfs_unlink,
+    .create = tmpfs_create,
 };
 
 static filesystem_t tmpfs_fs = {
@@ -135,7 +136,9 @@ int tmpfs_create(vnode_t *dir, const char *name, vnode_t **result) {
     if (tmpfs_find_child(inode, name)) return -EEXIST;
 
     tmpfs_inode_t *new_inode = tmpfs_alloc_inode(TMPFS_TYPE_FILE, name, inode);
-    if (!new_inode) return -ENOMEM;
+    if (!new_inode) {
+        return -ENOMEM;
+    }
 
     vnode_t *new_vnode = tmpfs_create_vnode(new_inode);
     if (!new_vnode) {

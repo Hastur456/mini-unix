@@ -11,6 +11,7 @@ static int sys_write(process_t *p, void *uap, int *retval);
 static int sys_read(process_t *p, void *uap, int *retval);
 static int sys_open(process_t *p, void *uap, int *retval);
 static int sys_close(process_t *p, void *uap, int *retval);
+static int sys_create(process_t *p, void *uap, int *retval);
 
 static process_t kernel_proc;
 
@@ -22,6 +23,7 @@ static struct sysent sysent[] = {
     [SYS_WRITE] = {3, sys_write},
     [SYS_OPEN]  = {2, sys_open},
     [SYS_CLOSE] = {1, sys_close},
+    [SYS_CREATE] = {1, sys_create},
 };
 
 void syscall_dispatch(struct interrupt_frame *frame) {
@@ -142,6 +144,27 @@ static int sys_close(process_t *p, void *uap, int *retval) {
     return 0;
 }
 
+static int sys_create(process_t *p, void *uap, int *retval) {
+    sys_args_t *args = (sys_args_t *)uap;
+    const char *path = args->create.path;
+    vnode_t *vnode = NULL;
+
+    if (path == NULL) {
+        *retval = -1;
+        return -EFAULT;
+    }
+
+    int err = vfs_create(path, &vnode);
+
+    if (err < 0) {
+        *retval = -1;
+        return err;
+    }
+
+    *retval = 0;
+    return 0;
+}
+
 int close(int fd) {
     return (int)syscall1(SYS_CLOSE, fd);
 }
@@ -156,4 +179,8 @@ int write(int fd, const char* buf, uint32_t len) {
 
 int read(int fd, void* buf, uint32_t len) {
     return (int)syscall3(SYS_READ, fd, (long)buf, len);
+}
+
+int create(const char *path) {
+    return (int)syscall1(SYS_CREATE, (long)path);
 }

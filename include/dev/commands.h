@@ -1,11 +1,13 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-#define COMMAND_ARG_MAX 16
+#include <dev/commands.h>
+
+typedef int (*command_func_t)(int argc, char **argv);
 
 struct Command {
     const char *name;
-    int (*func)(int argc, char **argv);
+    command_func_t func;
 };
 
 extern struct Command commands[];

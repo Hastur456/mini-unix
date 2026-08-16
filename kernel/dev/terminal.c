@@ -1,96 +1,156 @@
 #include <dev/terminal.h>
 
+#define COMMAND_BUFFER_SIZE 128
 
 static char buffer[COMMAND_BUFFER_SIZE];
 static int len = 0;
 
-static void put_at_buffer(char c) {
-    buffer[len] = c;
-    len++;
+static void shell_prompt(void)
+{
+    tty_write("> ");
+}
+
+static void buffer_clear(void)
+{
+    len = 0;
+    buffer[0] = '\0';
+}
+
+static void buffer_put(char c)
+{
+    if (len >= COMMAND_BUFFER_SIZE - 1) {
+        return;
+    }
+
+    buffer[len++] = c;
     buffer[len] = '\0';
 
     tty_putchar(c);
 }
 
-static void clear_buffer(void) {
-    len = 0;
-    buffer[len] = '\0';
-}
-
-static void shell_prompt(void) {
-    tty_write("> ");
-}
-
-static void buffer_backspace(void) {
+static void buffer_backspace(void)
+{
     if (len == 0) {
         return;
     }
 
     len--;
     buffer[len] = '\0';
+
     tty_putchar('\b');
 }
 
-static void print_buffer(void) {
-    tty_write("\nBuffer: [");
-
-    for (int i = 0; i < len; i++) {
-        tty_putchar(buffer[i]);
-    }
-
-    tty_write("]\n");
+static int is_space(char c)
+{
+    return c == ' ' || c == '\t';
 }
 
-static void command_execute(const char* command) {
-    if (strcmp(command, "") == 0) return;
+static int parse_command(char *input, char **argv)
+{
+    int argc = 0;
 
-    if (strcmp(command, "help") == 0) {
-        tty_write("Commands: help, clear, echo <text>");
-        tty_write("\n");
-        return;
+    while (*input != '\0') {
+        while (is_space(*input)) {
+            input++;
+        }
+
+        if (*input == '\0') {
+            break;
+        }
+
+        if (argc >= COMMAND_ARG_MAX) {
+            return -1;
+        }
+
+        argv[argc++] = input;
+
+        while (*input != '\0' && !is_space(*input)) {
+            input++;
+        }
+
+        if (*input == '\0') {
+            break;
+        }
+
+        *input = '\0';
+        input++;
     }
 
-    if (strcmp(command, "clear") == 0) {
-        tty_init();
-        return;
-    }
-
-    if (strncmp(command, "echo ", 5) == 0) {
-        tty_write(command + 5);
-        tty_write("\n");
-
-        return;
-    }
-
-    tty_write("Unknown command: ");
-    tty_write(command);
-    tty_write("\n");
+    return argc;
 }
 
-static void command_buffer_submit(void) {
-    buffer[len] = '\0';
+static const struct Command *command_find(const char *name)
+{
+    for (int i = 0; i < commands_count; i++) {
+        if (strcmp(commands[i].name, name) == 0) {
+            return &commands[i];
+        }
+    }
+
+    return 0;
+}
+
+static void command_execute(void)
+{
+    char *argv[COMMAND_ARG_MAX];
+
+    int argc = parse_command(buffer, argv);
+
+    if (argc == 0) {
+        return;
+    }
+
+    if (argc < 0) {
+        tty_write("shell: too many arguments\n");
+        return;
+    }
+
+    const struct Command *command = command_find(argv[0]);
+
+    if (command == 0) {
+        tty_write("shell: command not found: ");
+        tty_write(argv[0]);
+        tty_putchar('\n');
+        return;
+    }
+
+    command->func(argc, argv);
+}
+
+static void command_buffer_submit(void)
+{
     tty_putchar('\n');
-    command_execute(buffer);
-    clear_buffer();
+
+    command_execute();
+
+    buffer_clear();
     shell_prompt();
 }
 
-void shell_launch(void) {
+void shell_launch(void)
+{
+    buffer_clear();
     shell_prompt();
 
-    while(1) {
+    for (;;) {
         int c = keyboard_getchar();
 
-        if (c != -1) {
-            if (c == '\n') {
-                command_buffer_submit();
-            }
-            else if (c == '\b') {
-                buffer_backspace();
-            }
-            else {
-                put_at_buffer(c);
-            }
+        if (c == -1) {
+            continue;
         }
-    };
+
+        switch (c) {
+        case '\n':
+            command_buffer_submit();
+            break;
+
+        case '\b':
+            buffer_backspace();
+            break;
+
+        default:
+            buffer_put((char)c);
+            break;
+        }
+    }
 }
