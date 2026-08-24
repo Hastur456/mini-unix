@@ -5,8 +5,6 @@
 #include <lib/string.h>
 #include <kernel/errno.h>
 
-#define EFAULT 14
-
 #include "proc/syscalls.h"
 
 static interrupt_handler_t registered_handler;
@@ -29,6 +27,7 @@ static ssize_t vfs_write_result;
 static ssize_t vfs_read_result;
 static int vfs_open_result;
 static int vfs_close_result;
+static int vfs_create_result;
 
 ssize_t vfs_write(process_t *p, int fd, const void *buf, size_t count)
 {
@@ -63,6 +62,11 @@ int vfs_close(process_t *p, int fd)
     return vfs_close_result;
 }
 
+int vfs_create(process_t *p, const char *path, vnode_t **results) {
+    (void)p;
+    vfs_last_path = path;
+    return vfs_create_result;
+}
 
 #include "../kernel/proc/syscalls.c"
 

@@ -154,7 +154,7 @@ static int sys_create(process_t *p, void *uap, int *retval) {
         return -EFAULT;
     }
 
-    int err = vfs_create(path, &vnode);
+    int err = vfs_create(p, path, &vnode);
 
     if (err < 0) {
         *retval = -1;

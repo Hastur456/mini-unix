@@ -277,7 +277,7 @@ ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count) {
     return bytes_write;
 }
 
-int vfs_create(const char *path, vnode_t **result) {
+int vfs_create(process_t *proc, const char *path, vnode_t **result) {
     vnode_t *current;
     vnode_t *child;
     const char *next;
