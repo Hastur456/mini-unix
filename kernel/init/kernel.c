@@ -3,7 +3,7 @@
 #include <arch/x86/pic.h>
 
 #include <dev/keyboard.h>
-#include <dev/terminal.h>
+#include <dev/shell.h>
 #include <dev/timer.h>
 #include <dev/tty.h>
 

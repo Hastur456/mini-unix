@@ -1,4 +1,4 @@
-#include <dev/terminal.h>
+#include <dev/shell.h>
 
 #define COMMAND_BUFFER_SIZE 128
 
