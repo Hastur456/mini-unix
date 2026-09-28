@@ -109,14 +109,5 @@ void gdt_init(void) {
         0xC
     );
 
-    // TSS
-    gdt_set_gate(
-        GDT_TSS_SEGMENT,
-        0,
-        0,
-        0,
-        0
-    );
-
     gdt_flush(&gdt_ptr);
 }

@@ -76,7 +76,8 @@ static int keyboard_decode_scancode(uint8_t scancode) {
     return kbdus[scancode];
 }
 
-static void keyboard_irq_handler(struct interrupt_frame* frame) {
+static void keyboard_irq_handler(struct interrupt_frame* frame)
+{
     (void)frame;
 
     if (!(kb_status() & 1)) {
@@ -91,7 +92,8 @@ static void keyboard_irq_handler(struct interrupt_frame* frame) {
     }
 }
 
-void keyboard_init(void) {
+void keyboard_init(void)
+{
     key_buffer_head = 0;
     key_buffer_tail = 0;
 
@@ -99,13 +101,16 @@ void keyboard_init(void) {
     pic_unmask_irq(KEYBOARD_IRQ);
 }
 
-int keyboard_getchar(void) {
+int keyboard_getchar(void)
+{
     if (key_buffer_head == key_buffer_tail) {
         return -1;
     }
 
     unsigned char c = key_buffer[key_buffer_tail];
-    key_buffer_tail = (key_buffer_tail + 1) % KEYBOARD_BUFFER_SIZE;
+
+    key_buffer_tail =
+        (key_buffer_tail + 1) % KEYBOARD_BUFFER_SIZE;
 
     return c;
 }

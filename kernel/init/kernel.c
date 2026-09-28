@@ -1,70 +1,95 @@
 #include <arch/x86/gdt.h>
 #include <arch/x86/interrupts.h>
 #include <arch/x86/pic.h>
+#include <arch/x86/tss.h>
 
 #include <dev/keyboard.h>
-#include <dev/shell.h>
 #include <dev/timer.h>
 #include <dev/tty.h>
+#include <dev/tty_device.h>
 
 #include <fs/tmpfs.h>
 #include <fs/vfs.h>
 
 #include <proc/syscalls.h>
 
-#define HEAP_START 0x100000
-#define HEAP_SIZE  0x100000
+#include <lib/string.h>
+#include <lib/print.h>
+
+extern void user_init(void);
+extern void enter_user_mode(uint32_t entry);
+
+#define USER_SHELL_ENTRY 0x00200000
 
 void kmain(void)
 {
-    heap_init((void *)HEAP_START, HEAP_SIZE);
-    /*
-     * Console
-     */
+    /* HEAP */
+    heap_init(
+        (void *)HEAP_START,
+        HEAP_SIZE
+    );
+
+    /* Console. */
     tty_init();
 
-    /*
-     * CPU and interrupt infrastructure
-     */
+    /* CPU / interrupts. */
     gdt_init();
+    tss_init(0x001FFFF0);
     interrupts_init();
     syscalls_init();
 
-    /*
-     * Hardware
-     */
+    /* Hardware. */
     pic_init();
     timer_init(100);
     keyboard_init();
 
-    /*
-     * Virtual filesystem
-     */
+    /* VFS. */
     vfs_init();
 
+    /* TMPFS */
     int err = tmpfs_init();
     if (err < 0) {
-        kprintf("tmpfs_init failed: %d\n", err);
+        kprintf(
+            "tmpfs_init failed: %d\n",
+            err
+        );
+
         return;
     }
 
-    err = vfs_mount("/", "tmpfs", NULL);
+    /* Mount fo Tmpfs to VFS*/
+    err = vfs_mount(
+        "/",
+        "tmpfs",
+        NULL
+    );
     if (err < 0) {
-        kprintf("tmpfs mount failed: %d\n", err);
+        kprintf(
+            "tmpfs mount failed: %d\n",
+            err
+        );
+
         return;
     }
 
-    err = create("/hello.txt");
+    /* Create /tty. */
+    err = tty_device_init();
+
     if (err < 0) {
-        kprintf("create failed: %d\n", err);
+        kprintf(
+            "tty_device_init failed: %d\n",
+            err
+        );
+
+        return;
     }
-    /*
-     * Start accepting interrupts.
-     */
+
+    /* Enable keyboard/timer interrupts. */
     interrupt_enable();
 
-    /*
-     * Enter user-facing shell.
-     */
-    shell_launch();
+    /* Embedded shell binary -> userspace. */
+    user_init();
+
+    /* Enter ring 3. */
+    enter_user_mode(USER_SHELL_ENTRY);
 }

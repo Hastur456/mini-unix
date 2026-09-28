@@ -218,8 +218,16 @@ int vfs_open(process_t *current_proc, const char *path, int flags) {
 }
 
 int vfs_close(process_t *current_proc, int fd) {
+    if (!current_proc)
+        return -EINVAL;
+
+    if (fd < 0 || fd >= OPEN_MAX)
+        return -EBADF;
+
     file_t *f = process_get_file(current_proc, fd);
     if (!f) return -ENOENT;
+
+    current_proc->files[fd] = NULL;
 
     f->refcount--;
     if (f->refcount == 0) file_destroy(f);
@@ -227,50 +235,89 @@ int vfs_close(process_t *current_proc, int fd) {
     return 0;
 }   
 
-ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count) {
-    if (!proc) return -EINVAL;
+ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count)
+{
+    if (!proc)
+        return -EINVAL;
 
-    if (count == 0) return 0;
+    if (count == 0)
+        return 0;
 
-    if (!buf) return -EINVAL;
+    if (!buf)
+        return -EFAULT;
 
     file_t *file = process_get_file(proc, fd);
-    if (!file) return -EBADF;
+
+    if (!file)
+        return -EBADF;
 
     int access_mode = file->flags & O_ACCMODE;
-    if (access_mode != O_RDONLY && access_mode != O_RDWR) return -EACCES;
+
+    if (access_mode != O_RDONLY &&
+        access_mode != O_RDWR)
+        return -EACCES;
 
     vnode_t *vnode = file->node;
-    if (!vnode) return -EINVAL;
 
-    ssize_t bytes_read = vnode->ops->read(vnode, file->offset, buf, count);
-    if (bytes_read < 0) return bytes_read;
+    if (!vnode)
+        return -EINVAL;
+
+    if (!vnode->ops || !vnode->ops->read)
+        return -ENOSYS;
+
+    ssize_t bytes_read = vnode->ops->read(
+        vnode,
+        file->offset,
+        buf,
+        count
+    );
+
+    if (bytes_read < 0)
+        return bytes_read;
 
     file->offset += bytes_read;
 
     return bytes_read;
 }
 
-ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count) {
-    if (!proc) return -EINVAL;
+ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count)
+{
+    if (!proc)
+        return -EINVAL;
 
-    if (count == 0) return 0;
+    if (count == 0)
+        return 0;
 
-    if (!buf) return -EINVAL;
+    if (!buf)
+        return -EINVAL;
 
     file_t *file = process_get_file(proc, fd);
-    if (!file) return -EBADF;
+    if (!file)
+        return -EBADF;
 
     int access_mode = file->flags & O_ACCMODE;
-    if (access_mode != O_WRONLY && access_mode != O_RDWR) return -EACCES;
+
+    if (access_mode != O_WRONLY &&
+        access_mode != O_RDWR)
+        return -EACCES;
 
     vnode_t *vnode = file->node;
-    if (!vnode) return -EINVAL;
 
-    if (!vnode->ops || !vnode->ops->write) return -ENOSYS;
+    if (!vnode)
+        return -EINVAL;
 
-    ssize_t bytes_write = vnode->ops->write(vnode, file->offset, buf, count);
-    if (bytes_write < 0) return bytes_write;
+    if (!vnode->ops || !vnode->ops->write)
+        return -ENOSYS;
+
+    ssize_t bytes_write = vnode->ops->write(
+        vnode,
+        file->offset,
+        buf,
+        count
+    );
+
+    if (bytes_write < 0)
+        return bytes_write;
 
     file->offset += bytes_write;
 

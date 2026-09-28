@@ -5,8 +5,6 @@
 #include <lib/string.h>
 #include <kernel/errno.h>
 
-#include "proc/syscalls.h"
-
 static interrupt_handler_t registered_handler;
 static uint8_t registered_vector;
 

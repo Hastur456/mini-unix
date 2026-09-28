@@ -6,16 +6,7 @@
 #include <dev/tty.h>
 #include <proc/process.h>
 #include <fs/vfs.h>
-
-#define SYSCALL_VECTOR 0x80
-
-#define SYS_EXIT   1
-#define SYS_FORK   2
-#define SYS_READ   3
-#define SYS_WRITE  4
-#define SYS_OPEN   5
-#define SYS_CLOSE  6
-#define SYS_CREATE 7
+#include <proc/syscalls_numbers.h>
 
 typedef int syscallarg_t;
 typedef int (*sys_call_t)(process_t *p, void *uap, int *retval);
@@ -92,10 +83,10 @@ static inline long syscall5(long num, long a1, long a2, long a3, long a4, long a
 void syscalls_init(void);
 void syscall_dispatch(struct interrupt_frame *frame);
 
-int open(const char *path, int flags);
-int close(int fd);
-int read(int fd, void *buf, uint32_t len);
-int write(int fd, const char *buf, uint32_t len);
-int create(const char *path);
+int sys_write(process_t *p, void *uap, int *retval);
+int sys_read(process_t *p, void *uap, int *retval);
+int sys_open(process_t *p, void *uap, int *retval);
+int sys_close(process_t *p, void *uap, int *retval);
+int sys_create(process_t *p, void *uap, int *retval);
 
 #endif

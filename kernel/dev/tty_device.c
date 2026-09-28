@@ -1,4 +1,6 @@
 #include <dev/tty_device.h>
+#include <proc/process.h>
+#include <fs/vnode.h>
 
 
 static int tty_open(struct vnode *vnode, int flags) {
@@ -12,27 +14,35 @@ static int tty_close(struct vnode *vnode) {
     return 0;
 }
 
-static ssize_t tty_read(struct vnode *vnode, void *buf, size_t count, off_t offset) {
+static ssize_t tty_read(
+    struct vnode *vnode,
+    size_t offset,
+    void *buf,
+    size_t count
+)
+{
     (void)vnode;
     (void)offset;
 
-    char *cbuf = (char *)buf;
-    size_t i;
-    for (i = 0; i < count; i++) {
-        int c = keyboard_getchar();
-        if (c == -1) {
-            if (i == 0)
-                return -EIO;
-            break;
-        }
-        cbuf[i] = (char)c;
-        
-        break;
+    if (!buf || count == 0)
+        return 0;
+
+    int c;
+
+    while ((c = keyboard_getchar()) == -1){
+        __asm__ volatile ("sti; hlt");
     }
-    return (ssize_t)i;
+
+    ((char *)buf)[0] = (char)c;
+    return 1;
 }
 
-static ssize_t tty_write(struct vnode *vnode, const void *buf, size_t count, off_t offset) {
+static ssize_t tty_dev_write(
+    struct vnode *vnode,
+    size_t offset,
+    const void *buf,
+    size_t count
+) {    
     (void)vnode;
     (void)offset;
     const char *cbuf = (const char *)buf;
@@ -46,7 +56,7 @@ struct vnode_ops tty_dev_ops = {
     .open  = tty_open,
     .close = tty_close,
     .read  = tty_read,
-    .write = tty_write,
+    .write = tty_dev_write,
     .unlink = NULL,
     .create = NULL,
 };
@@ -60,7 +70,7 @@ int tty_device_init(void) {
         return err;
 
     tty_vnode->ops = &tty_dev_ops;
-    tty_vnode->type = VNODE_CHAR;
+    tty_vnode->type = VNODE_CHARDEV;
 
     return 0;
 }

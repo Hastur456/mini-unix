@@ -39,6 +39,8 @@ static void halt_kernel(void) {
 }
 
 void interrupts_init(void) {
+    interrupt_disable();
+
     for (int i = 0; i < INTERRUPT_VECTOR_COUNT; i++) {
         handlers[i] = 0;
     }

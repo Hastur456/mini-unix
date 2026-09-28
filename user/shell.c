@@ -1,143 +1,193 @@
-#include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/wait.h>
 #include "shell.h"
-#include "commands.h"
 
-#define SHELL_RL_BUFSIZE 1024
-#define SHELL_TOK_BUFSIZE 64
-#define SHELL_TOK_DELIM " \t\r\n\a"
+static int shell_tty_fd = -1;
 
 
-char *shell_read_line(void) {
-    int bufsize = SHELL_RL_BUFSIZE;
-    int position = 0;
+static void shell_print(const char *str)
+{
+    if (shell_tty_fd < 0)
+        return;
 
-    char *buffer = malloc(sizeof(char) * bufsize);
-    int c;
-
-    if (!buffer) {
-        fprintf(stderr, "shell: allocation error\n");
-        exit(EXIT_FAILURE);
-    }
-
-    while(1) {
-        c = getchar();
-
-        if (c == EOF || c == '\n') {
-            buffer[position] = '\0';
-            return buffer;
-        } else {
-            buffer[position] = c;
-        }
-        position++;
-
-        if (position >= bufsize) {
-            bufsize += SHELL_RL_BUFSIZE;
-            buffer = realloc(buffer, bufsize);
-
-            if (!buffer) {
-                fprintf(stderr, "Buffer allocation error\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
+    write(shell_tty_fd, str, strlen(str));
 }
 
 
-char **shell_split_line(char *line) {
-    int buffersize = SHELL_TOK_BUFSIZE, position = 0;
-    char **tokens = malloc(buffersize * sizeof(char*));
-    char *token;
+static void shell_print_error(const char *str)
+{
+    if (shell_tty_fd < 0)
+        return;
 
-    if (!tokens) {
-        fprintf(stderr, "shell: allocation error\n");
-        exit(EXIT_FAILURE);
-    }
+    write(shell_tty_fd, str, strlen(str));
+}
 
-    token = strtok(line, SHELL_TOK_DELIM);
-    while (token != NULL) {
-        tokens[position] = token;
-        position++;
 
-        if (position >= buffersize) {
-            buffersize += SHELL_TOK_BUFSIZE;
-            tokens = realloc(tokens, buffersize * sizeof(char *));
-            if (!tokens) {
-                fprintf(stderr, "shell: tokens not allocated");
-                exit(EXIT_FAILURE);
-            }
+int shell_read_line(char *buffer, int size)
+{
+    int position = 0;
+
+    if (!buffer || size <= 0)
+        return -1;
+
+    while (position < size - 1) {
+        char c;
+
+        int bytes = read(shell_tty_fd, &c, 1);
+
+        if (bytes < 0) {
+            return -1;
         }
 
-        token = strtok(NULL, SHELL_TOK_DELIM);
+        if (bytes == 0) {
+            continue;
+        }
+
+        if (bytes < 0)
+            return -1;
+
+        if (bytes == 0)
+            continue;
+
+        /*
+         * tty_read() currently gives us one character.
+         */
+        if (c == '\n' || c == '\r') {
+            buffer[position] = '\0';
+
+            shell_print("\n");
+
+            return position;
+        }
+
+        /*
+         * Basic backspace support.
+         */
+        if (c == '\b' || c == 127) {
+            if (position > 0) {
+                position--;
+
+                shell_print("\b \b");
+            }
+
+            continue;
+        }
+
+        /*
+         * Ignore other control characters.
+         */
+        if ((unsigned char)c < 32)
+            continue;
+
+        buffer[position++] = c;
+
+        /*
+         * Echo typed character.
+         */
+        write(shell_tty_fd, &c, 1);
     }
+
+    buffer[position] = '\0';
+
+    return position;
+}
+
+
+int shell_split_line(
+    char *line,
+    char **tokens,
+    int size
+)
+{
+    int position = 0;
+    int i = 0;
+
+    while (line[i] != '\0' && position < size - 1) {
+
+        while (line[i] != '\0' &&
+               (line[i] == ' '  ||
+                line[i] == '\t' ||
+                line[i] == '\r' ||
+                line[i] == '\n')) {
+            i++;
+        }
+
+        if (line[i] == '\0')
+            break;
+
+        tokens[position++] = &line[i];
+
+        while (line[i] != '\0' &&
+               line[i] != ' '  &&
+               line[i] != '\t' &&
+               line[i] != '\r' &&
+               line[i] != '\n') {
+            i++;
+        }
+
+        if (line[i] != '\0') {
+            line[i] = '\0';
+            i++;
+        }
+    }
+
     tokens[position] = NULL;
-    return tokens;
-}   
+
+    return position;
+}
 
 
 int shell_launch(char **args)
 {
-    pid_t pid, wpid;
-    int status;
+    (void)args;
 
-    pid = fork();
-    if (pid == 0) {
-        if (execvp(args[0], args) == -1) {
-        perror("shell");
-        }
-        exit(EXIT_FAILURE);
-    } else if (pid < 0) {
-        perror("lsh");
-    } else {
-        do {
-        wpid = waitpid(pid, &status, WUNTRACED);
-        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-    }
+    shell_print_error("command execution is not supported\n");
 
     return 0;
 }
 
 
-int shell_execute(char **args) {
-    int argc = 0;
-
-    if (args[0] == NULL) {
-        return 1;
-    }
-
-    while (args[argc] != NULL) {
-        argc++;
-    }
+int shell_execute(int argc, char **args)
+{
+    if (argc == 0 || args[0] == NULL)
+        return 0;
 
     for (int i = 0; i < commands_count; i++) {
-        if (strcmp(args[0], commands[i].name) == 0) {
+        if (strcmp(args[0], commands[i].name) == 0)
             return commands[i].fn(argc, args);
-        }
     }
 
-    fprintf(stderr, "unknown command: %s\n", args[0]);
+    shell_print_error("unknown command: ");
+    shell_print_error(args[0]);
+    shell_print_error("\n");
+
     return shell_launch(args);
 }
 
 
-void shell_loop(void) {
-    char *line;
-    char **args;
-    int status;
+void shell_main(int tty_fd)
+{
+    char line[SHELL_RL_BUFSIZE];
+    char *args[SHELL_TOK_BUFSIZE];
 
-    do {
-        printf("> ");
-        line = shell_read_line();
-        args = shell_split_line(line);
-        status = shell_execute(args);
+    shell_tty_fd = tty_fd;
 
-        free(line);
-        free(args);
+    for (;;) {
+        shell_print("mini-unix$ ");
 
-    } while (!status);
+        int length = shell_read_line(
+            line,
+            sizeof(line)
+        );
+
+        if (length < 0)
+            break;
+
+        int argc = shell_split_line(
+            line,
+            args,
+            SHELL_TOK_BUFSIZE
+        );
+
+        if (shell_execute(argc, args))
+            break;
+    }
 }

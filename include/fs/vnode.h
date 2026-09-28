@@ -6,6 +6,9 @@
 #include <sys/types.h>
 
 struct vnode;
+typedef struct vnode vnode_t;
+
+struct mount;
 typedef struct mount mount_t;
 
 #define VFS_MAX_NAME 255
@@ -19,7 +22,7 @@ typedef enum {
 
 
 typedef struct vnode_ops {
-    int (*open)(struct vnode *node);
+    int (*open)(struct vnode *node, int flags);
     int (*close)(struct vnode *node);
 
     ssize_t (*read)(
@@ -54,7 +57,6 @@ typedef struct vnode_ops {
     );
 } vnode_ops_t;
 
-
 typedef struct vnode {
     vnode_type_t type;
     char name[VFS_MAX_NAME + 1];
@@ -68,5 +70,6 @@ typedef struct vnode {
     mount_t *mounted_here;
     struct vnode *parent;
 } vnode_t;
+
 
 #endif
