@@ -21,18 +21,18 @@ static void println(const char *str)
 int cmd_echo(int argc, char **argv)
 {
     if (argc < 2) {
-        write(STDOUT_FILENO, "\n", 1);
+        println("");
         return 0;
     }
 
     for (int i = 1; i < argc; i++) {
         if (i > 1)
-            write(STDOUT_FILENO, " ", 1);
+            println(" ");
 
-        write(STDOUT_FILENO, argv[i], strlen(argv[i]));
+        print(argv[i]);
     }
 
-    write(STDOUT_FILENO, "\n", 1);
+    println("");
 
     return 0;
 }
@@ -70,21 +70,34 @@ int cmd_help(int argc, char **argv)
     println("  cat");
     println("  help");
     println("  exit");
+    println("  clear");
 
     return 0;
 }
 
 int cmd_exit(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
+
     return 1;
 }
 
+int cmd_clear(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    print("\033[2J\033[H");
+    return 0;
+}
 
 struct Command commands[] = {
     {"echo", cmd_echo},
     {"cat",  cmd_cat},
     {"help", cmd_help},
     {"exit", cmd_exit},
+    {"clear", cmd_clear},
 };
 
 const int commands_count =

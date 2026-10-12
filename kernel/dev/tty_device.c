@@ -1,4 +1,5 @@
 #include <dev/tty_device.h>
+#include <dev/vga.h>
 #include <proc/process.h>
 #include <fs/vnode.h>
 
@@ -46,6 +47,14 @@ static ssize_t tty_dev_write(
     (void)vnode;
     (void)offset;
     const char *cbuf = (const char *)buf;
+
+    if (count >= 7 && cbuf[0] == '\033' && cbuf[1] == '[' && cbuf[2] == '2' && 
+        cbuf[3] == 'J' && cbuf[4] == '\033' && cbuf[5] == '[' && cbuf[6] == 'H') {
+        
+        tty_clear();
+        return (ssize_t)count;
+    }
+
     for (size_t i = 0; i < count; i++) {
         tty_putchar(cbuf[i]);
     }
