@@ -120,7 +120,7 @@ int sys_open(process_t *p, void *uap, int *retval) {
     }
 
     *retval = fd;
-    return 0;
+    return fd;
 }
 
 int sys_close(process_t *p, void *uap, int *retval) {
