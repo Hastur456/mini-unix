@@ -4,7 +4,7 @@
 #include "commands.h"
 
 #define STDIN_FILENO  0
-#define STDOUT_FILENO 0
+#define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
 static void print(const char *str)
@@ -43,14 +43,14 @@ int cmd_cat(int argc, char **argv)
 
     if (argc != 2) {
         println("usage: cat <file>");
-        return 1;
+        return 0;
     }
 
     int fd = open(argv[1], 0);
 
     if (fd < 0) {
         println("cat: cannot open file");
-        return 1;
+        return 0;
     }
 
     int bytes;

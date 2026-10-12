@@ -186,8 +186,7 @@ void shell_main(int tty_fd)
             args,
             SHELL_TOK_BUFSIZE
         );
-
-        if (shell_execute(argc, args))
-            break;
+        
+        if (shell_execute(argc, args)) break;
     }
 }

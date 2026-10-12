@@ -4,12 +4,6 @@
 
 extern unsigned char _binary_build_user_shell_bin_start[];
 extern unsigned char _binary_build_user_shell_bin_end[];
-
-#define USER_SHELL_ADDR  0x00200000
-#define USER_SHELL_ENTRY USER_SHELL_ADDR
-
-#define USER_STACK_ADDR  0x00300000
-#define USER_ENTRY 0x00200000
  
 #define USER_CS GDT_UCODE_SELECTOR
 #define USER_DS GDT_UDATA_SELECTOR

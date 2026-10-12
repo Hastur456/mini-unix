@@ -19,8 +19,6 @@
 extern void user_init(void);
 extern void enter_user_mode(uint32_t entry);
 
-#define USER_SHELL_ENTRY 0x00200000
-
 void kmain(void)
 {
     /* HEAP */
@@ -91,5 +89,5 @@ void kmain(void)
     user_init();
 
     /* Enter ring 3. */
-    enter_user_mode(USER_SHELL_ENTRY);
+    enter_user_mode(USER_ENTRY);
 }
