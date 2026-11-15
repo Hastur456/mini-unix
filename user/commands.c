@@ -89,12 +89,52 @@ int cmd_cat(int argc, char **argv)
 
 int cmd_help(int argc, char **argv)
 {
+    if (argc > 2) {
+        println("usage: help [command]");
+        return 0;
+    }
+
+    if (argc == 2) {
+        for (int i = 0; i < commands_count; i++) {
+            if (strcmp(argv[1], commands[i].name) == 0) {
+                println(commands[i].name);
+                println("");
+                print("Usage: ");
+                println(commands[i].usage);
+                println("");
+                println(commands[i].description);
+                return 0;
+            }
+        }
+
+        print("help: command not found: ");
+        println(argv[1]);
+        return 0;
+    }
+
+    println("Mini-Unix Shell");
+    println("");
     println("Built-in commands:");
-    println("  echo");
-    println("  cat");
-    println("  help");
-    println("  exit");
-    println("  clear");
+    println("");
+
+    print("  COMMAND");
+    print("           DESCRIPTION\n");
+
+    for (int i = 0; i < commands_count; i++) {
+        const char *name = commands[i].name;
+        int padding = 14 - strlen(name);
+
+        print("  ");
+        print(name);
+
+        for (int j = 0; j < padding; j++)
+            print(" ");
+
+        println(commands[i].description);
+    }
+
+    println("");
+    println("Use 'help <command>' for more information.");
 
     return 0;
 }
@@ -201,13 +241,48 @@ int cmd_fs_create(int argc, char **argv)
 }
 
 struct Command commands[] = {
-    {"echo", cmd_echo},
-    {"cat",  cmd_cat},
-    {"help", cmd_help},
-    {"exit", cmd_exit},
-    {"clear", cmd_clear},
-    {"fs-write", cmd_fs_write},
-    {"fs-create", cmd_fs_create},
+    {
+        .name = "echo",
+        .fn = cmd_echo,
+        .usage = "echo [text ...]",
+        .description = "Display a line of text."
+    },
+    {
+        .name = "cat",
+        .fn = cmd_cat,
+        .usage = "cat <file>",
+        .description = "Display the contents of a file."
+    },
+    {
+        .name = "help",
+        .fn = cmd_help,
+        .usage = "help [command]",
+        .description = "Display information about built-in commands."
+    },
+    {
+        .name = "exit",
+        .fn = cmd_exit,
+        .usage = "exit",
+        .description = "Exit the shell."
+    },
+    {
+        .name = "clear",
+        .fn = cmd_clear,
+        .usage = "clear",
+        .description = "Clear the terminal screen."
+    },
+    {
+        .name = "fs-create",
+        .fn = cmd_fs_create,
+        .usage = "fs-create <path>",
+        .description = "Create an empty file."
+    },
+    {
+        .name = "fs-write",
+        .fn = cmd_fs_write,
+        .usage = "fs-write <path> <text>",
+        .description = "Write text to a file."
+    },
 };
 
 const int commands_count =

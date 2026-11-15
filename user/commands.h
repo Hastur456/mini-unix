@@ -6,6 +6,8 @@ typedef int (*command_fn)(int argc, char **argv);
 struct Command {
     const char *name;
     command_fn fn;
+    const char *usage;
+    const char *description;
 };
 
 extern struct Command commands[];
