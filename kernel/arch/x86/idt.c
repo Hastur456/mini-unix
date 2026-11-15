@@ -115,7 +115,7 @@ void idt_init() {
         idt_set_gate(IRQ_BASE + i, (uint32_t)irqs[i], KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE);
     }
 
-    idt_set_gate(SYSCALL_VECTOR, (uint32_t)isr128, KERNEL_CODE_SELECTOR, IDT_USER_TRAP_GATE);
+    idt_set_gate(SYSCALL_VECTOR, (uint32_t)isr128, KERNEL_CODE_SELECTOR, IDT_USER_INTERRUPT_GATE);
 
     ptr.limit = sizeof(idt) - 1;
     ptr.base = (uint32_t)&idt;

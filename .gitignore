@@ -4,3 +4,4 @@ build/
 *.txt
 *.exe
 .codex
+*.log
