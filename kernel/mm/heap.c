@@ -10,24 +10,20 @@ void heap_init(void *start, size_t size) {
     heap_current = heap_start;
 }
 
-
 void *kmalloc(size_t size) {
-    size = (size + 7) & ~(size_t)7;
-
-    if (heap_current + size >= heap_end) return NULL;
-
-    void *ptr = heap_current;
-
-    heap_current += size;
-
+    size_t total_size = ((size + 7) & ~(size_t)7) + 8;
+    if (heap_current + total_size >= heap_end) {
+        return NULL;
+    }
+    *(size_t *)heap_current = size;
+    void *ptr = heap_current + 8;
+    heap_current += total_size;
     return ptr;
 }
-
 
 void kfree(void *ptr) {
     (void)ptr;
 }
-
 
 void *krealloc(void *ptr, size_t size) {
     if (!ptr)

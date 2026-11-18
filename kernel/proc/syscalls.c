@@ -7,12 +7,7 @@ static int sys_nosys(process_t* p, void* uap, int* retval) {
     return -1;
 }
 
-static int sys_write(process_t *p, void *uap, int *retval);
-static int sys_read(process_t *p, void *uap, int *retval);
-static int sys_open(process_t *p, void *uap, int *retval);
-static int sys_close(process_t *p, void *uap, int *retval);
-
-static process_t kernel_proc;
+process_t kernel_proc;
 
 static struct sysent sysent[] = {
     [0]         = {0, sys_nosys},
@@ -22,6 +17,7 @@ static struct sysent sysent[] = {
     [SYS_WRITE] = {3, sys_write},
     [SYS_OPEN]  = {2, sys_open},
     [SYS_CLOSE] = {1, sys_close},
+    [SYS_CREATE] = {1, sys_create},
 };
 
 void syscall_dispatch(struct interrupt_frame *frame) {
@@ -59,7 +55,7 @@ void syscalls_init(void) {
     interrupt_register_handler(SYSCALL_VECTOR, syscall_dispatch);
 }
 
-static int sys_write(process_t *p, void *uap, int *retval) {
+int sys_write(process_t *p, void *uap, int *retval) {
     sys_args_t *args = (sys_args_t *)uap;
     int fd = (int)args->write.fd;
     const char *buf = (const char *)args->write.buf;
@@ -84,7 +80,7 @@ static int sys_write(process_t *p, void *uap, int *retval) {
     return 0;
 }
 
-static int sys_read(process_t *p, void *uap, int *retval) {
+int sys_read(process_t *p, void *uap, int *retval) {
     sys_args_t *args = (sys_args_t *)uap;
     int fd = (int)args->read.fd;
     void *buf = args->read.buf;
@@ -106,7 +102,7 @@ static int sys_read(process_t *p, void *uap, int *retval) {
     return 0;
 }
 
-static int sys_open(process_t *p, void *uap, int *retval) {
+int sys_open(process_t *p, void *uap, int *retval) {
     sys_args_t *args = (sys_args_t *)uap;
     const char *path = args->open.path;
     int flags = args->open.flags;
@@ -124,10 +120,10 @@ static int sys_open(process_t *p, void *uap, int *retval) {
     }
 
     *retval = fd;
-    return 0;
+    return fd;
 }
 
-static int sys_close(process_t *p, void *uap, int *retval) {
+int sys_close(process_t *p, void *uap, int *retval) {
     sys_args_t *args = (sys_args_t *)uap;
     int fd = args->close.fd;
 
@@ -142,18 +138,23 @@ static int sys_close(process_t *p, void *uap, int *retval) {
     return 0;
 }
 
-int close(int fd) {
-    return (int)syscall1(SYS_CLOSE, fd);
-}
+int sys_create(process_t *p, void *uap, int *retval) {
+    sys_args_t *args = (sys_args_t *)uap;
+    const char *path = args->create.path;
+    vnode_t *vnode = NULL;
 
-int open(const char* path, int flags) {
-    return (int)syscall2(SYS_OPEN, (long)path, flags);
-}
+    if (path == NULL) {
+        *retval = -1;
+        return -EFAULT;
+    }
 
-int write(int fd, const char* buf, uint32_t len) {
-    return (int)syscall3(SYS_WRITE, fd, (long)buf, len);
-}
+    int err = vfs_create(p, path, &vnode);
 
-int read(int fd, void* buf, uint32_t len) {
-    return (int)syscall3(SYS_READ, fd, (long)buf, len);
+    if (err < 0) {
+        *retval = -1;
+        return err;
+    }
+
+    *retval = 0;
+    return 0;
 }

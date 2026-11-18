@@ -10,25 +10,30 @@ SECTIONS
 {
     . = 1M;
 
-    .text :
+    kernel_start = .;
+
+    .text : ALIGN(4096)
     {
         *(.multiboot)
         *(.text*)
     } :text
 
-    .rodata :
+    .rodata : ALIGN(4096)
     {
         *(.rodata*)
     } :text
 
-    .data :
+    .data : ALIGN(4096)
     {
         *(.data*)
     } :data
 
-    .bss :
+    .bss : ALIGN(4096)
     {
         *(COMMON)
         *(.bss*)
     } :data
+
+    . = ALIGN(4096);
+    kernel_end = .;
 }

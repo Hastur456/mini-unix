@@ -1,9 +1,17 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-char *shell_read_line(void);
-char **shell_split_line(char *line);
-int shell_execute(char **args);
-void shell_loop(void);
+#include <unistd.h>
+#include <lib/string.h>
+
+#include "commands.h"
+
+#define SHELL_RL_BUFSIZE 1024
+#define SHELL_TOK_BUFSIZE 64
+
+int shell_read_line(char *buffer, int size);
+int shell_split_line(char *line, char **tokens, int size);
+int shell_execute(int argc, char **args);
+void shell_main(int tty_fd);
 
 #endif

@@ -198,13 +198,19 @@ int vfs_open(process_t *current_proc, const char *path, int flags) {
     int err;
 
     err = vfs_lookup(path, &vnode);
-    if (err < 0) return err;
+    if (err < 0) {
+        return err;
+    }
 
     int fd = process_alloc_fd(current_proc);
-    if (fd < 0) return fd;
+    if (fd < 0) {
+        return fd;
+    }
 
     file_t *f = file_create(vnode, flags);
-    if (!f) return -ENOMEM;
+    if (!f) {
+        return -ENOMEM;
+    }
 
     current_proc->files[fd] = f;
 
@@ -212,8 +218,16 @@ int vfs_open(process_t *current_proc, const char *path, int flags) {
 }
 
 int vfs_close(process_t *current_proc, int fd) {
+    if (!current_proc)
+        return -EINVAL;
+
+    if (fd < 0 || fd >= OPEN_MAX)
+        return -EBADF;
+
     file_t *f = process_get_file(current_proc, fd);
     if (!f) return -ENOENT;
+
+    current_proc->files[fd] = NULL;
 
     f->refcount--;
     if (f->refcount == 0) file_destroy(f);
@@ -221,52 +235,167 @@ int vfs_close(process_t *current_proc, int fd) {
     return 0;
 }   
 
-ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count) {
-    if (!proc) return -EINVAL;
+ssize_t vfs_read(process_t *proc, int fd, void *buf, size_t count)
+{
+    if (!proc)
+        return -EINVAL;
 
-    if (count == 0) return 0;
+    if (count == 0)
+        return 0;
 
-    if (!buf) return -EINVAL;
+    if (!buf)
+        return -EFAULT;
 
     file_t *file = process_get_file(proc, fd);
-    if (!file) return -EBADF;
+
+    if (!file)
+        return -EBADF;
 
     int access_mode = file->flags & O_ACCMODE;
-    if (access_mode != O_RDONLY && access_mode != O_RDWR) return -EACCES;
+
+    if (access_mode != O_RDONLY &&
+        access_mode != O_RDWR)
+        return -EACCES;
 
     vnode_t *vnode = file->node;
-    if (!vnode) return -EINVAL;
 
-    ssize_t bytes_read = vnode->ops->read(vnode, file->offset, buf, count);
-    if (bytes_read < 0) return bytes_read;
+    if (!vnode)
+        return -EINVAL;
+
+    if (!vnode->ops || !vnode->ops->read)
+        return -ENOSYS;
+
+    ssize_t bytes_read = vnode->ops->read(
+        vnode,
+        file->offset,
+        buf,
+        count
+    );
+
+    if (bytes_read < 0)
+        return bytes_read;
 
     file->offset += bytes_read;
 
     return bytes_read;
 }
 
-ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count) {
-    if (!proc) return -EINVAL;
+ssize_t vfs_write(process_t *proc, int fd, const void *buf, size_t count)
+{
+    if (!proc)
+        return -EINVAL;
 
-    if (count == 0) return 0;
+    if (count == 0)
+        return 0;
 
-    if (!buf) return -EINVAL;
+    if (!buf)
+        return -EINVAL;
 
     file_t *file = process_get_file(proc, fd);
-    if (!file) return -EBADF;
+    if (!file)
+        return -EBADF;
 
     int access_mode = file->flags & O_ACCMODE;
-    if (access_mode != O_WRONLY && access_mode != O_RDWR) return -EACCES;
+
+    if (access_mode != O_WRONLY &&
+        access_mode != O_RDWR)
+        return -EACCES;
 
     vnode_t *vnode = file->node;
-    if (!vnode) return -EINVAL;
 
-    if (!vnode->ops || !vnode->ops->write) return -ENOSYS;
+    if (!vnode)
+        return -EINVAL;
 
-    ssize_t bytes_write = vnode->ops->write(vnode, file->offset, buf, count);
-    if (bytes_write < 0) return bytes_write;
+    if (!vnode->ops || !vnode->ops->write)
+        return -ENOSYS;
+
+    ssize_t bytes_write = vnode->ops->write(
+        vnode,
+        file->offset,
+        buf,
+        count
+    );
+
+    if (bytes_write < 0)
+        return bytes_write;
 
     file->offset += bytes_write;
 
     return bytes_write;
+}
+
+int vfs_create(process_t *proc, const char *path, vnode_t **result) {
+    vnode_t *current;
+    vnode_t *child;
+    const char *next;
+    char name[VFS_MAX_NAME + 1];
+
+    if (!path || !result || path[0] != '/') {
+        return -EINVAL;
+    }
+
+    if (strcmp(path, "/") == 0) {
+        return -EEXIST;
+    }
+
+    current = mounted_root(&root_vnode);
+    next = path;
+
+    while (1) {
+        const char *component_end;
+
+        component_end = next_component(next, name);
+        if (!component_end) {
+            return -EINVAL;
+        }
+
+        next = component_end;
+
+        while (*next == '/') {
+            next++;
+        }
+
+        current = mounted_root(current);
+
+        if (*next == '\0') {
+            break;
+        }
+
+        if (!current->ops || !current->ops->lookup) {
+            return -ENOTDIR;
+        }
+
+        child = NULL;
+
+        if (current->ops->lookup(current, name, &child) < 0) {
+            return -ENOENT;
+        }
+
+        if (!child) {
+            return -ENOENT;
+        }
+
+        current = child;
+    }
+
+    if (!current->ops || !current->ops->create) {
+        return -ENOSYS;
+    }
+
+    child = NULL;
+
+    if (current->ops->lookup(current, name, &child) == 0) {
+        return -EEXIST;
+    }
+
+    if (current->ops->create(current, name, &child) < 0) {
+        return -EIO;
+    }
+
+    if (!child) {
+        return -EINVAL;
+    }
+
+    *result = child;
+    return 0;
 }

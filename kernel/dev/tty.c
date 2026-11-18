@@ -12,6 +12,13 @@ void tty_init(void) {
     vga_update_cursor(tty_x, tty_y);
 }
 
+void tty_clear(void) {
+    tty_x = 0;
+    tty_y = 0;
+    vga_init_and_clear();
+    vga_update_cursor(tty_x, tty_y);
+}
+
 void tty_putchar(char c) {
 
     if (c == '\n') {

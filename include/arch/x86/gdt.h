@@ -23,6 +23,10 @@
 #define GDT_USTACK_SELECTOR 0x33
 #define GDT_UTSS_SELECTOR 0x3b
 
+#define USER_SHELL_ADDR  0x00200000
+#define USER_STACK_ADDR  0x00300000
+#define USER_ENTRY 0x00200000
+
 struct gdt_entry {
     uint16_t limit_low;
     uint16_t base_low;

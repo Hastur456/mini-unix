@@ -1,151 +1,313 @@
-#include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <lib/string.h>
+#include <kernel/errno.h>
 #include "commands.h"
 
-#define BUFFER_SIZE 1024
+#define STDIN_FILENO  0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
 
+static void print(const char *str)
+{
+    write(STDOUT_FILENO, str, strlen(str));
+}
 
-struct Command commands[] = {
-    {"ls", cmd_ls},
-    {"pwd", cmd_pwd},
-    {"cd", cmd_cd},
-    {"echo", cmd_echo},
-    {"cat", cmd_cat},
-    {"exit", cmd_exit},
-    {"help", cmd_help}
-};
+static void println(const char *str)
+{
+    print(str);
+    write(STDOUT_FILENO, "\n", 1);
+}
 
-const int commands_count = sizeof(commands) / sizeof(commands[0]);
+static void print_int(int value)
+{
+    char buffer[11];
+    unsigned int magnitude;
+    int i = 0;
 
+    if (value < 0) {
+        write(STDOUT_FILENO, "-", 1);
+        magnitude = 0u - (unsigned int)value;
+    } else {
+        magnitude = (unsigned int)value;
+    }
 
-int cmd_ls(int argc, char **argv) {
-    DIR *dir;
-    struct dirent *entry;
-    const char *path = (argc > 1) ? argv[1]: ".";
+    do {
+        buffer[i++] = '0' + magnitude % 10;
+        magnitude /= 10;
+    } while (magnitude != 0);
 
+    while (i > 0) {
+        write(STDOUT_FILENO, &buffer[--i], 1);
+    }
+}
+
+int cmd_echo(int argc, char **argv)
+{
     if (argc < 2) {
-        fprintf(stderr, "usage: ls {dir}\n");
-        return 1;
-    }
-
-    dir = opendir(path);
-
-    if (dir == NULL) {
-        perror("Empty directory");
-        return 1;
-    }
-
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry -> d_name, ".") == 0 || strcmp(entry -> d_name, "..") == 0) {
-            continue;
-        }
-        printf("%s\n", entry->d_name);
-    }
-
-    closedir(dir);
-    return 0;
-}
-
-int cmd_pwd(int argc, char **argv) {
-    char buffer[FILENAME_MAX];
-
-    if (argc > 1) {
-        fprintf(stderr, "usage: pwd\n");
-        return 1;
-    }
-
-    if (getcwd(buffer, (int)sizeof(buffer)) == NULL) {
-        perror("pwd");
-        return 1;
-    }
-
-    printf("%s\n", buffer);
-    return 0;
-}
-
-int cmd_cd(int argc, char **argv) {
-    const char *path;
-
-    if (argc > 2) {
-        fprintf(stderr, "usage: cd [path]\n");
+        println("");
         return 0;
     }
 
-    path = argc == 2 ? argv[1] : getenv("HOME");
-    if (path == NULL) {
-        path = ".";
+    for (int i = 1; i < argc; i++) {
+        if (i > 1)
+            println(" ");
+
+        print(argv[i]);
     }
 
-    if (chdir(path) != 0) {
-        perror("cd");
-        return 0;
-    }
-    
-    return 0;
-}
-
-
-int cmd_echo(int argc, char **argv) {
-    if (argc == 2) {
-        printf("%s\n", argv[1]);
-        return 0;
-    }
-
-    if (argc > 2 || argv[2] == ">") {
-        int fd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd == -1) {
-            return 1;
-        }
-
-        write(fd, argv[1], strlen(argv[1]));
-
-        close(fd);
-    }
+    println("");
 
     return 0;
 }
 
+int cmd_cat(int argc, char **argv)
+{
+    char buffer[128];
+    char last_char = '\n';
+    int has_data = 0;
 
-int cmd_cat(int argc, char **argv) {
+    if (argc != 2) {
+        println("usage: cat <file>");
+        return 0;
+    }
+
     int fd = open(argv[1], O_RDONLY);
 
     if (fd < 0) {
-        perror("cat");
+        println("cat: cannot open file");
         return 0;
     }
 
-    char buffer[BUFFER_SIZE];
-    ssize_t bytes;
+    int bytes;
 
-    while ((bytes = read(fd, buffer, BUFFER_SIZE)) > 0) {
-        write(STDOUT_FILENO, buffer, bytes);
+    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0) {
+        has_data = 1;
+        last_char = buffer[bytes - 1];
+
+        int written = 0;
+
+        while (written < bytes) {
+            int result = write(
+                STDOUT_FILENO,
+                buffer + written,
+                bytes - written
+            );
+
+            if (result <= 0) {
+                close(fd);
+                return 0;
+            }
+
+            written += result;
+        }
     }
 
+    if (has_data && last_char != '\n')
+        write(STDOUT_FILENO, "\n", 1);
+
     close(fd);
+
     return 0;
 }
 
-
-int cmd_help(int argc, char **args)
+int cmd_help(int argc, char **argv)
 {
-  int i;
-  printf("Type program names and arguments, and hit enter.\n");
-  printf("The following are built in:\n");
+    if (argc > 2) {
+        println("usage: help [command]");
+        return 0;
+    }
 
-  for (i = 0; i < commands_count; i++) {
-    printf("  %s\n", commands[i].name);
-  }
+    if (argc == 2) {
+        for (int i = 0; i < commands_count; i++) {
+            if (strcmp(argv[1], commands[i].name) == 0) {
+                println(commands[i].name);
+                println("");
+                print("Usage: ");
+                println(commands[i].usage);
+                println("");
+                println(commands[i].description);
+                return 0;
+            }
+        }
 
-  printf("Use the man command for information on other programs.\n");
-  return 0;
+        print("help: command not found: ");
+        println(argv[1]);
+        return 0;
+    }
+
+    println("Mini-Unix Shell");
+    println("");
+    println("Built-in commands:");
+    println("");
+
+    print("  COMMAND");
+    print("           DESCRIPTION\n");
+
+    for (int i = 0; i < commands_count; i++) {
+        const char *name = commands[i].name;
+        int padding = 14 - strlen(name);
+
+        print("  ");
+        print(name);
+
+        for (int j = 0; j < padding; j++)
+            print(" ");
+
+        println(commands[i].description);
+    }
+
+    println("");
+    println("Use 'help <command>' for more information.");
+
+    return 0;
 }
 
-
-int cmd_exit(int argc, char **args)
+int cmd_exit(int argc, char **argv)
 {
-  return 1;
+    (void)argc;
+    (void)argv;
+
+    return 1;
 }
+
+int cmd_clear(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    print("\033[2J\033[H");
+    return 0;
+}
+
+int cmd_fs_write(int argc, char **argv)
+{
+    if (argc != 3) {
+        println("usage: fs-write <path> <text>");
+        return 0;
+    }
+
+    int fd = open(argv[1], O_WRONLY);
+
+    if (fd < 0) {
+        println("fs-write: open failed");
+        print(argv[1]);
+        return 0;
+    }
+
+    int bytes = write(fd, argv[2], strlen(argv[2]));
+
+    if (bytes < 0) {
+        println("fs-write: write failed");
+        close(fd);
+        return 0;
+    }
+
+    close(fd);
+
+    print("written ");
+    print_int(bytes);
+    println(" bytes");
+
+    return 0;
+}
+
+int cmd_fs_create(int argc, char **argv)
+{
+    if (argc != 2) {
+        println("usage: fs-create <path>");
+        return 0;
+    }
+
+    int err = create(argv[1]);
+
+    if (err >= 0)
+        return 0;
+
+    print("fs-create: ");
+
+    switch (-err) {
+    case EEXIST:
+        println("File already exists.");
+        break;
+    case ENOENT:
+        println("No such file or directory.");
+        break;
+    case ENOTDIR:
+        println("A component of the path is not a directory.");
+        break;
+    case EACCES:
+        println("Permission denied.");
+        break;
+    case EROFS:
+        println("Read-only file system.");
+        break;
+    case ENOSPC:
+        println("No space left on device.");
+        break;
+    case ENOMEM:
+        println("Cannot allocate memory.");
+        break;
+    case EINVAL:
+        println("Invalid argument.");
+        break;
+    case EFAULT:
+        println("Bad address.");
+        break;
+    default:
+        print("Unknown error ");
+        print_int(-err);
+        println(".");
+        break;
+    }
+
+    return 0;
+}
+
+struct Command commands[] = {
+    {
+        .name = "echo",
+        .fn = cmd_echo,
+        .usage = "echo [text ...]",
+        .description = "Display a line of text."
+    },
+    {
+        .name = "cat",
+        .fn = cmd_cat,
+        .usage = "cat <file>",
+        .description = "Display the contents of a file."
+    },
+    {
+        .name = "help",
+        .fn = cmd_help,
+        .usage = "help [command]",
+        .description = "Display information about built-in commands."
+    },
+    {
+        .name = "exit",
+        .fn = cmd_exit,
+        .usage = "exit",
+        .description = "Exit the shell."
+    },
+    {
+        .name = "clear",
+        .fn = cmd_clear,
+        .usage = "clear",
+        .description = "Clear the terminal screen."
+    },
+    {
+        .name = "fs-create",
+        .fn = cmd_fs_create,
+        .usage = "fs-create <path>",
+        .description = "Create an empty file."
+    },
+    {
+        .name = "fs-write",
+        .fn = cmd_fs_write,
+        .usage = "fs-write <path> <text>",
+        .description = "Write text to a file."
+    },
+};
+
+const int commands_count =
+    sizeof(commands) / sizeof(commands[0]);
