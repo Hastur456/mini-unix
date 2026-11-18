@@ -64,13 +64,15 @@ int cmd_echo(int argc, char **argv)
 int cmd_cat(int argc, char **argv)
 {
     char buffer[128];
+    char last_char = '\n';
+    int has_data = 0;
 
     if (argc != 2) {
         println("usage: cat <file>");
         return 0;
     }
 
-    int fd = open(argv[1], 0);
+    int fd = open(argv[1], O_RDONLY);
 
     if (fd < 0) {
         println("cat: cannot open file");
@@ -79,8 +81,30 @@ int cmd_cat(int argc, char **argv)
 
     int bytes;
 
-    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0)
-        println(buffer);
+    while ((bytes = read(fd, buffer, sizeof(buffer))) > 0) {
+        has_data = 1;
+        last_char = buffer[bytes - 1];
+
+        int written = 0;
+
+        while (written < bytes) {
+            int result = write(
+                STDOUT_FILENO,
+                buffer + written,
+                bytes - written
+            );
+
+            if (result <= 0) {
+                close(fd);
+                return 0;
+            }
+
+            written += result;
+        }
+    }
+
+    if (has_data && last_char != '\n')
+        write(STDOUT_FILENO, "\n", 1);
 
     close(fd);
 

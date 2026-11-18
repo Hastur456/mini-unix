@@ -97,41 +97,81 @@ int shell_split_line(
     int size
 )
 {
-    int position = 0;
-    int i = 0;
+    int argc = 0;
+    int src = 0;
+    int dst = 0;
 
-    while (line[i] != '\0' && position < size - 1) {
+    if (!line || !tokens || size <= 0)
+        return -1;
 
-        while (line[i] != '\0' &&
-               (line[i] == ' '  ||
-                line[i] == '\t' ||
-                line[i] == '\r' ||
-                line[i] == '\n')) {
-            i++;
+    while (line[src] != '\0') {
+
+        /* Skip whitespace. */
+        while (line[src] == ' '  ||
+               line[src] == '\t' ||
+               line[src] == '\r' ||
+               line[src] == '\n') {
+            src++;
         }
 
-        if (line[i] == '\0')
+        if (line[src] == '\0')
             break;
 
-        tokens[position++] = &line[i];
+        if (argc >= size - 1)
+            return -1;
 
-        while (line[i] != '\0' &&
-               line[i] != ' '  &&
-               line[i] != '\t' &&
-               line[i] != '\r' &&
-               line[i] != '\n') {
-            i++;
+        tokens[argc++] = &line[dst];
+
+        char quote = '\0';
+
+        while (line[src] != '\0') {
+            char c = line[src];
+
+            if (quote != '\0') {
+                if (c == quote) {
+                    quote = '\0';
+                    src++;
+                    continue;
+                }
+
+                line[dst++] = c;
+                src++;
+                continue;
+            }
+
+            if (c == '\'' || c == '"') {
+                quote = c;
+                src++;
+                continue;
+            }
+
+            if (c == ' '  ||
+                c == '\t' ||
+                c == '\r' ||
+                c == '\n') {
+                break;
+            }
+
+            line[dst++] = c;
+            src++;
         }
 
-        if (line[i] != '\0') {
-            line[i] = '\0';
-            i++;
-        }
+        if (quote != '\0')
+            return -1;
+
+        /*
+         * Important:
+         * Move source position before writing NULL.
+         */
+        if (line[src] != '\0')
+            src++;
+
+        line[dst++] = '\0';
     }
 
-    tokens[position] = NULL;
+    tokens[argc] = NULL;
 
-    return position;
+    return argc;
 }
 
 
@@ -186,6 +226,11 @@ void shell_main(int tty_fd)
             args,
             SHELL_TOK_BUFSIZE
         );
+
+        if (argc < 0) {
+            shell_print_error("syntax error: unclosed quote or too many arguments\n");
+            continue;
+        }
         
         if (shell_execute(argc, args)) break;
     }
